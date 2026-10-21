@@ -1,6 +1,8 @@
 'use client';
 
+import { House, RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useToast } from '@/components/Toast';
 import { api } from '@/lib/api';
 import type { Device, HaEntityMap, HaHealth, HaMetric, HaState } from '@/lib/types';
 
@@ -13,12 +15,11 @@ const METRICS: { key: HaMetric; label: string }[] = [
 
 /** Admin: petakan entity sensor Home Assistant ke metrik perangkat ini. */
 export default function HomeAssistantCard({ device, onSaved }: { device: Device; onSaved: () => void }) {
+  const toast = useToast();
   const [health, setHealth] = useState<HaHealth | null>(null);
   const [entities, setEntities] = useState<HaState[]>([]);
   const [map, setMap] = useState<HaEntityMap>(device.haEntities ?? {});
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState('');
-  const [error, setError] = useState('');
 
   useEffect(() => {
     api
@@ -27,18 +28,16 @@ export default function HomeAssistantCard({ device, onSaved }: { device: Device;
         setHealth(h);
         if (h.status === 'ok') return api.haStates('sensor').then(setEntities);
       })
-      .catch((e) => setError(e.message));
+      .catch((e) => setHealth({ status: 'error', message: e.message }));
   }, []);
 
   async function run(action: () => Promise<string>) {
     setBusy(true);
-    setError('');
-    setNotice('');
     try {
-      setNotice(await action());
+      toast(await action());
       onSaved();
     } catch (e) {
-      setError((e as Error).message);
+      toast((e as Error).message, 'error');
     } finally {
       setBusy(false);
     }
@@ -48,75 +47,86 @@ export default function HomeAssistantCard({ device, onSaved }: { device: Device;
     run(async () => {
       const payload = Object.fromEntries(METRICS.map((m) => [m.key, map[m.key] ?? ''])) as HaEntityMap;
       await api.setHaEntities(device.id, payload);
-      return 'Pemetaan disimpan.';
+      return 'Pemetaan Home Assistant disimpan';
     });
 
   const sync = () =>
     run(async () => {
       const r = await api.haSync();
-      if (r.status === 'busy') return 'Sync sedang berjalan, coba lagi sebentar.';
+      if (r.status === 'busy') return 'Sinkronisasi sedang berjalan, coba sebentar lagi';
       const mine = r.skipped?.find((s) => s.deviceId === device.id);
-      return mine ? `Perangkat ini dilewati: ${mine.reason}` : `Sync selesai: ${r.inserted} perangkat diperbarui.`;
+      if (mine) throw new Error(`Belum ada data: ${mine.reason}`);
+      return 'Data terbaru berhasil diambil dari Home Assistant';
     });
 
-  const unit = (id?: string) => entities.find((e) => e.entity_id === id);
+  const entity = (id?: string) => entities.find((e) => e.entity_id === id);
+  const connected = health?.status === 'ok';
 
   return (
-    <section className="card">
-      <div className="device-head">
-        <h2>Home Assistant</h2>
+    <div className="card">
+      <div className="card-head">
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <House size={18} />
+            <h2>Sensor dari Home Assistant</h2>
+          </div>
+          <p className="muted small">
+            {connected
+              ? 'Pilih sensor HA untuk tiap data. Nilainya disalin otomatis setiap 5 menit.'
+              : health?.message ?? 'Memeriksa koneksi…'}
+          </p>
+        </div>
         {health && (
-          <span className={`badge ${health.status === 'ok' ? 'on' : 'off'}`}>
-            {health.status === 'ok' ? 'Terhubung' : health.status === 'not_configured' ? 'Belum diatur' : 'Error'}
+          <span className={`pill ${connected ? 'ok' : health.status === 'not_configured' ? 'off' : 'warn'}`}>
+            <span className="dot" />
+            {connected ? 'Terhubung' : health.status === 'not_configured' ? 'Belum diatur' : 'Gangguan'}
           </span>
         )}
       </div>
-      <p className="muted small">
-        {health?.status === 'ok'
-          ? `${health.baseUrl} · ${entities.length} sensor tersedia. Data disalin berkala ke riwayat perangkat ini.`
-          : health?.message ?? 'Memeriksa koneksi…'}
-      </p>
 
-      {error && <div className="error">{error}</div>}
-      {notice && <div className="notice">{notice}</div>}
+      {connected && (
+        <>
+          <div className="form-grid">
+            {METRICS.map((m) => {
+              const s = entity(map[m.key]);
+              const unavailable = s && (s.state === 'unavailable' || s.state === 'unknown');
+              return (
+                <label key={m.key} className="field">
+                  {m.label}
+                  <input
+                    list="ha-sensors"
+                    placeholder="Ketik untuk mencari sensor…"
+                    value={map[m.key] ?? ''}
+                    onChange={(e) => setMap({ ...map, [m.key]: e.target.value.trim() })}
+                  />
+                  {s && (
+                    <span className="hint" style={{ color: unavailable ? 'var(--warning)' : undefined }}>
+                      {unavailable ? 'Sensor sedang offline di Home Assistant' : `Nilai sekarang: ${s.state} ${s.attributes.unit_of_measurement ?? ''}`}
+                    </span>
+                  )}
+                </label>
+              );
+            })}
+          </div>
+          <datalist id="ha-sensors">
+            {entities.map((e) => (
+              <option key={e.entity_id} value={e.entity_id}>
+                {e.attributes.friendly_name} ({e.state} {e.attributes.unit_of_measurement ?? ''})
+              </option>
+            ))}
+          </datalist>
 
-      <div className="user-form">
-        {METRICS.map((m) => {
-          const s = unit(map[m.key]);
-          return (
-            <label key={m.key}>
-              {m.label}
-              <input
-                list="ha-sensors"
-                placeholder="sensor.…"
-                value={map[m.key] ?? ''}
-                onChange={(e) => setMap({ ...map, [m.key]: e.target.value.trim() })}
-              />
-              {s && (
-                <span className="muted small">
-                  Sekarang: {s.state} {s.attributes.unit_of_measurement ?? ''}
-                </span>
-              )}
-            </label>
-          );
-        })}
-      </div>
-      <datalist id="ha-sensors">
-        {entities.map((e) => (
-          <option key={e.entity_id} value={e.entity_id}>
-            {e.attributes.friendly_name} ({e.state} {e.attributes.unit_of_measurement ?? ''})
-          </option>
-        ))}
-      </datalist>
-
-      <div className="relay-actions" style={{ marginTop: 12 }}>
-        <button className="btn primary" onClick={save} disabled={busy}>
-          Simpan pemetaan
-        </button>
-        <button className="btn" onClick={sync} disabled={busy || health?.status !== 'ok'}>
-          Sync sekarang
-        </button>
-      </div>
-    </section>
+          <div className="actions-row">
+            <button className="btn primary" onClick={save} disabled={busy}>
+              Simpan pemetaan
+            </button>
+            <button className="btn" onClick={sync} disabled={busy}>
+              <RefreshCw size={16} />
+              Ambil data sekarang
+            </button>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
