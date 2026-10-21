@@ -1,4 +1,15 @@
-import type { AuthResponse, Device, RelayCommand, Role, SensorReading, User } from './types';
+import type {
+  AuthResponse,
+  Device,
+  HaEntityMap,
+  HaHealth,
+  HaState,
+  HaSyncResult,
+  RelayCommand,
+  Role,
+  SensorReading,
+  User,
+} from './types';
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
 const TOKEN_KEY = 'smartfarm_token';
@@ -50,6 +61,12 @@ export const api = {
   createUser: (data: { name: string; email: string; password: string; role: Role }) =>
     request<User>('/users', { method: 'POST', body: JSON.stringify(data) }),
   deleteUser: (id: number) => request<{ ok: true }>(`/users/${id}`, { method: 'DELETE' }),
+
+  haHealth: () => request<HaHealth>('/home-assistant/health'),
+  haStates: (domain = 'sensor') => request<HaState[]>(`/home-assistant/states?domain=${domain}`),
+  haSync: () => request<HaSyncResult>('/home-assistant/sync', { method: 'POST' }),
+  setHaEntities: (deviceId: number, map: HaEntityMap) =>
+    request<Device>(`/home-assistant/devices/${deviceId}`, { method: 'PUT', body: JSON.stringify(map) }),
 
   devices: () => request<Device[]>('/devices'),
   device: (id: number) => request<Device>(`/devices/${id}`),

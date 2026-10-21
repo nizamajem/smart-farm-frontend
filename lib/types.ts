@@ -29,6 +29,7 @@ export interface Device {
   location: string;
   apiKey: string;
   relayLabels: string[];
+  haEntities: HaEntityMap | null;
   ownerId: number;
   lastSeenAt: string | null;
   createdAt: string;
@@ -44,4 +45,26 @@ export interface RelayCommand {
   status: 'pending' | 'sent' | 'done' | 'expired';
   createdAt: string;
   ackAt: string | null;
+}
+
+export type HaMetric = 'temperature' | 'humidity' | 'soilMoisture' | 'lightLux';
+export type HaEntityMap = Partial<Record<HaMetric, string>>;
+
+export interface HaHealth {
+  status: 'ok' | 'error' | 'not_configured';
+  message?: string;
+  baseUrl?: string;
+}
+
+export interface HaState {
+  entity_id: string;
+  state: string;
+  attributes: { friendly_name?: string; unit_of_measurement?: string };
+}
+
+export interface HaSyncResult {
+  status: 'success' | 'busy';
+  devices?: number;
+  inserted?: number;
+  skipped?: { deviceId: number; reason: string }[];
 }

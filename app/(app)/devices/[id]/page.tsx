@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
+import HomeAssistantCard from '@/components/HomeAssistantCard';
 import LineChart from '@/components/LineChart';
 import Metric from '@/components/Metric';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import type { Device, RelayCommand, SensorReading } from '@/lib/types';
 
 const STATUS_LABEL: Record<RelayCommand['status'], string> = {
@@ -18,6 +20,7 @@ const STATUS_LABEL: Record<RelayCommand['status'], string> = {
 export default function DeviceDetailPage() {
   const id = Number(useParams<{ id: string }>().id);
   const router = useRouter();
+  const { user } = useAuth();
   const [device, setDevice] = useState<Device | null>(null);
   const [readings, setReadings] = useState<SensorReading[]>([]);
   const [commands, setCommands] = useState<RelayCommand[]>([]);
@@ -146,6 +149,8 @@ export default function DeviceDetailPage() {
           )}
         </section>
       </div>
+
+      {user?.role === 'admin' && <HomeAssistantCard key={device.id} device={device} onSaved={load} />}
 
       <section className="card">
         <h2>Koneksi perangkat</h2>
