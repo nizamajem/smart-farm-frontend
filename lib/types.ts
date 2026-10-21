@@ -72,6 +72,7 @@ export interface HaSyncResult {
 export interface AppRelease {
   id: number;
   version: string;
+  versionCode: number | null;
   notes: string;
   size: number;
   sha256: string;
