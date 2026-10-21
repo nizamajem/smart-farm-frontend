@@ -11,6 +11,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  // Akun demo hanya ada di lingkungan development (SEED_DEMO), jangan tampilkan di server produksi
+  const [isLocal, setIsLocal] = useState(false);
+
+  useEffect(() => {
+    setIsLocal(['localhost', '127.0.0.1'].includes(window.location.hostname));
+  }, []);
 
   useEffect(() => {
     if (user) router.replace('/dashboard');
@@ -58,11 +64,13 @@ export default function LoginPage() {
         </button>
 
         <p className="muted small">Belum punya akun? Minta admin untuk membuatkan.</p>
-        <p className="muted small">
-          Demo admin: admin@smartfarm.local / admin123
-          <br />
-          Demo user: user@smartfarm.local / user123
-        </p>
+        {isLocal && (
+          <p className="muted small">
+            Demo admin: admin@smartfarm.local / admin123
+            <br />
+            Demo user: user@smartfarm.local / user123
+          </p>
+        )}
       </form>
     </main>
   );
