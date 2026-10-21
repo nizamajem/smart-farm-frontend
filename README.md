@@ -14,3 +14,9 @@ npm run dev                        # http://localhost:3000
 ```
 
 Backend harus berjalan terlebih dahulu.
+
+## Produksi
+
+`Dockerfile` membangun output standalone Next.js dan menjalankannya dengan PM2.
+`NEXT_PUBLIC_API_URL` ditanam saat build (default `/api`, backend di domain yang sama lewat reverse proxy).
+Deploy lengkap: lihat [smart-farm-deploy](https://github.com/nizamajem/smart-farm-deploy).
