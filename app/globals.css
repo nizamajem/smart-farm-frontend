@@ -186,10 +186,86 @@ label {
   z-index: 1;
 }
 
+.topbar-left,
 .topbar-right {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.topbar-left {
+  gap: 24px;
+}
+
+.nav {
+  display: flex;
+  gap: 16px;
+}
+
+.nav a {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.nav a.active {
+  color: var(--text);
+}
+
+.role {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: capitalize;
+}
+
+.role.admin {
+  background: color-mix(in srgb, var(--c-temp) 18%, transparent);
+  color: var(--c-temp);
+}
+
+.role.user {
+  background: color-mix(in srgb, var(--c-hum) 18%, transparent);
+  color: var(--c-hum);
+}
+
+.notice {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.user-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.right {
+  text-align: right;
+}
+
+.btn.small {
+  padding: 4px 10px;
+  font-size: 0.85rem;
+}
+
+.danger-text {
+  color: var(--danger);
 }
 
 .container {
@@ -398,5 +474,12 @@ label {
 @media (max-width: 600px) {
   .topbar {
     padding: 12px 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .table {
+    display: block;
+    overflow-x: auto;
   }
 }

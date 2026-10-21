@@ -1,6 +1,6 @@
 # Smart Farm — Frontend
 
-Web dashboard Next.js untuk Smart Farm: login/register, daftar perangkat, grafik sensor, kontrol relay.
+Web dashboard Next.js untuk Smart Farm: login, kelola pengguna (admin), daftar perangkat, grafik sensor, kontrol relay.
 
 - Backend: https://github.com/nizamajem/smart-farm-backend
 - Mobile: https://github.com/nizamajem/smart-farm-mobile

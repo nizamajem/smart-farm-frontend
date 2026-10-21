@@ -1,4 +1,4 @@
-import type { AuthResponse, Device, RelayCommand, SensorReading, User } from './types';
+import type { AuthResponse, Device, RelayCommand, Role, SensorReading, User } from './types';
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
 const TOKEN_KEY = 'smartfarm_token';
@@ -44,9 +44,12 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 export const api = {
   login: (email: string, password: string) =>
     request<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
-  register: (name: string, email: string, password: string) =>
-    request<AuthResponse>('/auth/register', { method: 'POST', body: JSON.stringify({ name, email, password }) }),
   me: () => request<User>('/auth/me'),
+
+  users: () => request<User[]>('/users'),
+  createUser: (data: { name: string; email: string; password: string; role: Role }) =>
+    request<User>('/users', { method: 'POST', body: JSON.stringify(data) }),
+  deleteUser: (id: number) => request<{ ok: true }>(`/users/${id}`, { method: 'DELETE' }),
 
   devices: () => request<Device[]>('/devices'),
   device: (id: number) => request<Device>(`/devices/${id}`),
