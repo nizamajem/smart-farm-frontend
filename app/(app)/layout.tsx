@@ -1,6 +1,6 @@
 'use client';
 
-import { LayoutDashboard, LogOut, Menu, Sprout, Users, X } from 'lucide-react';
+import { LayoutDashboard, LogOut, Menu, Smartphone, Sprout, Users, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -26,7 +26,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const links = [
     { href: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard, match: ['/dashboard', '/devices'] },
-    ...(user.role === 'admin' ? [{ href: '/users', label: 'Pengguna', Icon: Users, match: ['/users'] }] : []),
+    ...(user.role === 'admin'
+      ? [
+          { href: '/users', label: 'Pengguna', Icon: Users, match: ['/users'] },
+          { href: '/apps', label: 'Aplikasi', Icon: Smartphone, match: ['/apps'] },
+        ]
+      : []),
   ];
 
   const brand = (

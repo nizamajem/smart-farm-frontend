@@ -1,4 +1,5 @@
 import type {
+  AppRelease,
   AuthResponse,
   Device,
   HaEntityMap,
@@ -52,6 +53,41 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return body as T;
 }
 
+/** Unggah APK lewat XHR (fetch belum mendukung progres unggahan). */
+function uploadRelease(
+  data: { file: File; version: string; notes: string },
+  onProgress: (percent: number) => void,
+): Promise<AppRelease> {
+  return new Promise((resolve, reject) => {
+    const form = new FormData();
+    form.append('version', data.version);
+    form.append('notes', data.notes);
+    form.append('file', data.file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${API_URL}/app-releases`);
+    const token = tokenStore.get();
+    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(Math.round((e.loaded / e.total) * 100));
+    xhr.onload = () => {
+      let body: { message?: string | string[] } | null = null;
+      try {
+        body = JSON.parse(xhr.responseText);
+      } catch {}
+      if (xhr.status >= 200 && xhr.status < 300) return resolve(body as AppRelease);
+      const msg =
+        xhr.status === 413
+          ? 'Berkas terlalu besar untuk diunggah'
+          : Array.isArray(body?.message)
+            ? body.message.join(', ')
+            : body?.message ?? `HTTP ${xhr.status}`;
+      reject(new ApiError(xhr.status, msg));
+    };
+    xhr.onerror = () => reject(new ApiError(0, 'Koneksi terputus saat mengunggah'));
+    xhr.send(form);
+  });
+}
+
 export const api = {
   login: (email: string, password: string) =>
     request<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
@@ -67,6 +103,12 @@ export const api = {
   haSync: () => request<HaSyncResult>('/home-assistant/sync', { method: 'POST' }),
   setHaEntities: (deviceId: number, map: HaEntityMap) =>
     request<Device>(`/home-assistant/devices/${deviceId}`, { method: 'PUT', body: JSON.stringify(map) }),
+
+  latestRelease: () => request<{ release: AppRelease | null }>('/app-releases/latest'),
+  releases: () => request<AppRelease[]>('/app-releases'),
+  deleteRelease: (id: number) => request<{ ok: true }>(`/app-releases/${id}`, { method: 'DELETE' }),
+  releaseDownloadUrl: (id?: number) => `${API_URL}/app-releases/${id ?? 'latest'}/download`,
+  uploadRelease,
 
   devices: () => request<Device[]>('/devices'),
   device: (id: number) => request<Device>(`/devices/${id}`),

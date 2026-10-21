@@ -3,6 +3,7 @@
 import { CircleAlert, Eye, EyeOff, Sprout } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import DownloadAppCard from '@/components/DownloadAppCard';
 import ThemeSwitch from '@/components/ThemeSwitch';
 import { useAuth } from '@/lib/auth';
 
@@ -104,6 +105,7 @@ export default function LoginPage() {
         <p className="muted small" style={{ textAlign: 'center' }}>
           Belum punya akun? Hubungi admin untuk dibuatkan.
         </p>
+        <DownloadAppCard />
         {isLocal && (
           <div className="alert info small">
             <span>

@@ -68,3 +68,13 @@ export interface HaSyncResult {
   inserted?: number;
   skipped?: { deviceId: number; reason: string }[];
 }
+
+export interface AppRelease {
+  id: number;
+  version: string;
+  notes: string;
+  size: number;
+  sha256: string;
+  downloads?: number;
+  createdAt: string;
+}

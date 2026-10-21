@@ -1006,6 +1006,83 @@ select:focus,
   color: var(--danger);
 }
 
+/* ============ Unggah & unduh APK ============ */
+.dropzone {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 28px 16px;
+  text-align: center;
+  border: 2px dashed var(--border);
+  border-radius: 14px;
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.dropzone b {
+  color: var(--text);
+  word-break: break-all;
+}
+
+.dropzone:hover,
+.dropzone.over {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.dropzone.has-file {
+  border-style: solid;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.progress {
+  position: relative;
+  height: 32px;
+  margin-top: 14px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.progress > div {
+  height: 100%;
+  background: var(--primary-soft);
+  border-right: 2px solid var(--primary);
+  transition: width 0.2s;
+}
+
+.progress span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.download-app {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--primary);
+  border-radius: 12px;
+  background: var(--primary-soft);
+  color: var(--text);
+  transition: background 0.15s;
+}
+
+.download-app:hover {
+  background: var(--surface-2);
+}
+
+.download-app > svg {
+  color: var(--primary);
+}
+
 /* ============ Login ============ */
 .auth-page {
   min-height: 100vh;

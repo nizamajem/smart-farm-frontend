@@ -14,6 +14,11 @@ export function formatValue(v: number | null | undefined, unit: string) {
   return unit === 'lx' ? Math.round(v).toLocaleString('id-ID') : v.toLocaleString('id-ID', { maximumFractionDigits: 1 });
 }
 
+export function formatBytes(bytes: number) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / 1024 / 1024).toLocaleString('id-ID', { maximumFractionDigits: 1 })} MB`;
+}
+
 export function initials(name: string) {
   return name
     .trim()
