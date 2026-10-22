@@ -1120,6 +1120,144 @@ pre.code {
   text-transform: uppercase;
 }
 
+/* ============ Logs (terminal) ============ */
+.tab-badge {
+  min-width: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.log-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.sm-select {
+  width: auto;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  border-radius: 8px;
+}
+
+.log-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 220px;
+  max-width: 340px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.log-search input {
+  border: 0;
+  padding: 6px 0;
+  font-size: 0.85rem;
+  background: transparent;
+}
+
+.log-search input:focus {
+  outline: none;
+}
+
+.terminal-wrap {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+/* Selalu gelap seperti terminal, apa pun temanya */
+.terminal {
+  height: min(68vh, 680px);
+  overflow: auto;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #1f2a22;
+  background: #0b0f0c;
+  color: #c9d4cb;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.term-empty {
+  color: #6b7a6f;
+}
+
+.term-line {
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 1px 0;
+}
+
+.term-line:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.term-line > span {
+  margin-right: 8px;
+}
+
+.t-time {
+  color: #6b7a6f;
+}
+
+.t-level {
+  display: inline-block;
+  min-width: 5ch;
+  font-weight: 700;
+}
+
+.t-ctx {
+  color: #7fb3d5;
+}
+
+.lv-debug .t-level,
+.lv-debug .t-msg {
+  color: #6b7a6f;
+}
+
+.lv-info .t-level {
+  color: #5fd38a;
+}
+
+.lv-warn .t-level,
+.lv-warn .t-msg {
+  color: #f0c060;
+}
+
+.lv-error .t-level,
+.lv-error .t-msg {
+  color: #ff7b72;
+}
+
+.t-data {
+  margin: 2px 0 4px 2ch;
+  padding: 4px 8px;
+  border-left: 2px solid #2a3a2e;
+  color: #9fb0a3;
+  font: inherit;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.term-follow {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  box-shadow: var(--shadow);
+}
+
 /* ============ Log aktivitas ============ */
 .list-link {
   display: flex;

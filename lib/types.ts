@@ -152,3 +152,17 @@ export interface MqttCredentials {
   topics: { telemetry: string; status: string; command: string; ack: string };
   examples: { telemetry: Record<string, number>; command: Record<string, unknown>; ack: Record<string, unknown> };
 }
+
+export type LogChannel = 'system' | 'mqtt' | 'ha';
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+
+export interface LogEntry {
+  id: number;
+  ts: string;
+  level: LogLevel;
+  context: string;
+  message: string;
+  data?: unknown;
+}
+
+export type LogStats = Record<LogChannel, { count: number; errors: number }>;

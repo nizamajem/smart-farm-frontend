@@ -1,6 +1,6 @@
 'use client';
 
-import { LayoutDashboard, LogOut, Menu, Radio, Smartphone, Users, X } from 'lucide-react';
+import { LayoutDashboard, LogOut, Menu, Radio, Smartphone, SquareTerminal, Users, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -42,6 +42,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       ? [
           { href: '/users', label: 'Pengguna', Icon: Users, match: ['/users'] },
           { href: '/integrations', label: 'Integrasi', Icon: Radio, match: ['/integrations'] },
+          { href: '/logs', label: 'Logs', Icon: SquareTerminal, match: ['/logs'] },
           { href: '/apps', label: 'Aplikasi', Icon: Smartphone, match: ['/apps'] },
         ]
       : []),

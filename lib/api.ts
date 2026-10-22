@@ -9,6 +9,9 @@ import type {
   HaState,
   HaSyncResult,
   IntegrationsStatus,
+  LogChannel,
+  LogEntry,
+  LogStats,
   MqttCredentials,
   RelayCommand,
   Role,
@@ -107,6 +110,10 @@ export const api = {
   haSync: () => request<HaSyncResult>('/home-assistant/sync', { method: 'POST' }),
   setHaEntities: (deviceId: number, map: HaEntityMap) =>
     request<Device>(`/home-assistant/devices/${deviceId}`, { method: 'PUT', body: JSON.stringify(map) }),
+
+  logStats: () => request<LogStats>('/logs'),
+  logs: (channel: LogChannel, after = 0) => request<LogEntry[]>(`/logs/${channel}?after=${after}&limit=2000`),
+  clearLogs: (channel: LogChannel) => request<{ ok: true }>(`/logs/${channel}`, { method: 'DELETE' }),
 
   integrations: () => request<IntegrationsStatus>('/integrations'),
   setIntegration: (name: 'mqtt' | 'home-assistant', enabled: boolean) =>
