@@ -1,6 +1,7 @@
 'use client';
 
-import { Eye, EyeOff, Plus, Trash2 } from 'lucide-react';
+import { ChevronRight, Eye, EyeOff, Plus, Trash2 } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import Modal, { ConfirmDialog } from '@/components/Modal';
@@ -69,7 +70,8 @@ export default function UsersPage() {
           <div>
             <h2>Daftar akun</h2>
             <p className="muted small">
-              <b>Admin</b> melihat semua perangkat dan mengelola akun. <b>User</b> hanya melihat perangkat miliknya.
+              <b>Admin</b> melihat semua perangkat dan mengelola akun. <b>User</b> hanya melihat perangkat miliknya. Klik
+              pengguna untuk melihat log aktivitasnya.
             </p>
           </div>
         </div>
@@ -79,16 +81,21 @@ export default function UsersPage() {
           <div className="list">
             {users.map((u) => (
               <div key={u.id} className="list-row">
-                <div className="avatar">{initials(u.name)}</div>
-                <div className="grow">
-                  <div className="title">
-                    {u.name} {u.id === me?.id && <span className="muted small">(Anda)</span>}
+                <Link href={`/users/${u.id}`} className="list-link" title="Lihat log aktivitas">
+                  <div className="avatar">{initials(u.name)}</div>
+                  <div className="grow">
+                    <div className="title">
+                      {u.name} {u.id === me?.id && <span className="muted small">(Anda)</span>}
+                    </div>
+                    <div className="muted small" style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.email}</div>
+                    <div className="muted small">
+                      {u.lastLoginAt ? `Login ${timeAgo(u.lastLoginAt)}` : 'Belum pernah login'}
+                      {u.lastSeenAt && ` · aktif ${timeAgo(u.lastSeenAt)}`}
+                    </div>
                   </div>
-                  <div className="muted small" style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {u.email} · dibuat {timeAgo(u.createdAt)}
-                  </div>
-                </div>
-                <span className={`pill ${u.role}`}>{u.role === 'admin' ? 'Admin' : 'User'}</span>
+                  <span className={`pill ${u.role}`}>{u.role === 'admin' ? 'Admin' : 'User'}</span>
+                  <ChevronRight size={18} className="muted" />
+                </Link>
                 {u.id !== me?.id && (
                   <button className="icon-btn" onClick={() => setToDelete(u)} aria-label={`Hapus ${u.email}`} title="Hapus akun">
                     <Trash2 size={17} color="var(--danger)" />

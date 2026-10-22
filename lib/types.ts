@@ -6,6 +6,8 @@ export interface User {
   email: string;
   role: Role;
   createdAt: string;
+  lastLoginAt?: string | null;
+  lastSeenAt?: string | null;
 }
 
 export interface AuthResponse {
@@ -78,4 +80,29 @@ export interface AppRelease {
   sha256: string;
   downloads?: number;
   createdAt: string;
+}
+
+export type ActivityType = 'login' | 'login_failed' | 'app_open' | 'action';
+
+export interface ActivityLog {
+  id: number;
+  type: ActivityType;
+  action: string | null;
+  description: string;
+  deviceId: number | null;
+  platform: string | null;
+  appVersion: string | null;
+  ip: string | null;
+  createdAt: string;
+}
+
+export interface ActivityPage {
+  items: ActivityLog[];
+  nextBefore: number | null;
+}
+
+export interface ActivitySummary {
+  user: User;
+  totals: { logins: number; failedLogins30d: number; appOpens30d: number; actions30d: number };
+  daily: { date: string; web: number; app: number }[];
 }

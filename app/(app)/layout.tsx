@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import ThemeSwitch from '@/components/ThemeSwitch';
+import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { initials } from '@/lib/format';
 
@@ -21,6 +22,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   // Tutup menu setelah pindah halaman (layar kecil)
   useEffect(() => setOpen(false), [pathname]);
+
+  // Catat "membuka website" sekali per sesi browser (tab baru / setelah browser ditutup)
+  useEffect(() => {
+    if (!user) return;
+    const key = `smartfarm_opened_${user.id}`;
+    try {
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, '1');
+    } catch {}
+    api.appOpen().catch(() => undefined);
+  }, [user]);
 
   if (loading || !user) return <div className="center muted">Memuat…</div>;
 

@@ -1,4 +1,6 @@
 import type {
+  ActivityPage,
+  ActivitySummary,
   AppRelease,
   AuthResponse,
   Device,
@@ -38,6 +40,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       ...init,
       headers: {
         'Content-Type': 'application/json',
+        'x-client': 'web',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...init.headers,
       },
@@ -102,6 +105,15 @@ export const api = {
   haSync: () => request<HaSyncResult>('/home-assistant/sync', { method: 'POST' }),
   setHaEntities: (deviceId: number, map: HaEntityMap) =>
     request<Device>(`/home-assistant/devices/${deviceId}`, { method: 'PUT', body: JSON.stringify(map) }),
+
+  appOpen: () => request<{ ok: boolean }>('/activity/app-open', { method: 'POST' }),
+  activity: (userId: number, type?: string, before?: number) => {
+    const q = new URLSearchParams({ limit: '30' });
+    if (type) q.set('type', type);
+    if (before) q.set('before', String(before));
+    return request<ActivityPage>(`/users/${userId}/activity?${q}`);
+  },
+  activitySummary: (userId: number) => request<ActivitySummary>(`/users/${userId}/activity/summary`),
 
   latestRelease: () => request<{ release: AppRelease | null }>('/app-releases/latest'),
   releases: () => request<AppRelease[]>('/app-releases'),
