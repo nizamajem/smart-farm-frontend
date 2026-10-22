@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import HomeAssistantCard from '@/components/HomeAssistantCard';
 import LineChart from '@/components/LineChart';
+import MqttCard from '@/components/MqttCard';
 import { MetricGrid } from '@/components/Metric';
 import { ConfirmDialog } from '@/components/Modal';
 import StatusPill from '@/components/StatusPill';
@@ -21,6 +22,8 @@ const STATUS_LABEL: Record<RelayCommand['status'], string> = {
   done: 'Selesai',
   expired: 'Tidak terkirim',
 };
+
+const SOURCE_LABEL = { mqtt: 'MQTT', ha: 'Home Assistant', http: 'HTTP' } as const;
 
 type Tab = 'overview' | 'control' | 'settings';
 const TABS: { id: Tab; label: string; Icon: typeof Gauge }[] = [
@@ -105,6 +108,12 @@ export default function DeviceDetailPage() {
                 <h2>Kondisi terkini</h2>
                 <p className="muted small">
                   {device.latestReading ? `Diperbarui ${timeAgo(device.latestReading.createdAt)}` : 'Belum ada data sensor'}
+                  {device.latestReading?.source && (
+                    <>
+                      {' · via '}
+                      <span className="source-badge">{SOURCE_LABEL[device.latestReading.source]}</span>
+                    </>
+                  )}
                 </p>
               </div>
             </div>
@@ -124,8 +133,8 @@ export default function DeviceDetailPage() {
               <div className="alert info">
                 <Activity size={16} />
                 <span>
-                  Perangkat ini belum menerima data. Buka tab <b>Pengaturan</b> untuk menghubungkan ESP32 atau sensor Home
-                  Assistant.
+                  Perangkat ini belum menerima data. Buka tab <b>Pengaturan</b> untuk menghubungkan perangkat lewat MQTT,
+                  Home Assistant, atau HTTP.
                 </span>
               </div>
             </div>
@@ -292,12 +301,14 @@ function SettingsTab({
 
   return (
     <>
+      <MqttCard deviceId={device.id} />
+
       {isAdmin && <HomeAssistantCard key={device.id} device={device} onSaved={onSaved} />}
 
       <div className="card">
         <div className="card-head">
           <div>
-            <h2>Hubungkan ESP32</h2>
+            <h2>Hubungkan lewat HTTP (alternatif)</h2>
             <p className="muted small">
               Tanam kunci ini di firmware. ESP32 mengirim data ke <code>POST /api/iot/readings</code> dan mengambil perintah dari{' '}
               <code>GET /api/iot/commands</code> dengan header <code>x-device-key</code>.

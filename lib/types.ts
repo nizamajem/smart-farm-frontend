@@ -22,6 +22,7 @@ export interface SensorReading {
   humidity: number | null;
   soilMoisture: number | null;
   lightLux: number | null;
+  source?: 'http' | 'mqtt' | 'ha';
   createdAt: string;
 }
 
@@ -105,4 +106,49 @@ export interface ActivitySummary {
   user: User;
   totals: { logins: number; failedLogins30d: number; appOpens30d: number; actions30d: number };
   daily: { date: string; web: number; app: number }[];
+}
+
+export interface MqttStatus {
+  enabled: boolean;
+  running: boolean;
+  tcpPort: number;
+  wsPath: string;
+  startedAt: string | null;
+  connectedClients: number;
+  devicesConnected: number[];
+  messagesReceived: number;
+  lastMessageAt: string | null;
+  lastMessage: { deviceId: number; topic: string; at: string } | null;
+  lastError: string | null;
+  publicHost: string | null;
+  publicPort: number;
+  adminUsername: string | null;
+  adminPassword: string | null;
+}
+
+export interface HaIntegrationStatus {
+  enabled: boolean;
+  configured: boolean;
+  baseUrl: string | null;
+  intervalSec: number;
+  lastSyncAt: string | null;
+  lastSyncResult: { devices: number; inserted: number; skipped: { deviceId: number; reason: string }[] } | null;
+  lastSyncError: string | null;
+}
+
+export interface IntegrationsStatus {
+  mqtt: MqttStatus;
+  homeAssistant: HaIntegrationStatus;
+}
+
+export interface MqttCredentials {
+  enabled: boolean;
+  connected: boolean;
+  tcp: { host: string | null; port: number };
+  wsPath: string;
+  username: string;
+  password: string;
+  clientIdHint: string;
+  topics: { telemetry: string; status: string; command: string; ack: string };
+  examples: { telemetry: Record<string, number>; command: Record<string, unknown>; ack: Record<string, unknown> };
 }

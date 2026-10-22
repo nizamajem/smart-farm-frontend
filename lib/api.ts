@@ -8,6 +8,8 @@ import type {
   HaHealth,
   HaState,
   HaSyncResult,
+  IntegrationsStatus,
+  MqttCredentials,
   RelayCommand,
   Role,
   SensorReading,
@@ -105,6 +107,11 @@ export const api = {
   haSync: () => request<HaSyncResult>('/home-assistant/sync', { method: 'POST' }),
   setHaEntities: (deviceId: number, map: HaEntityMap) =>
     request<Device>(`/home-assistant/devices/${deviceId}`, { method: 'PUT', body: JSON.stringify(map) }),
+
+  integrations: () => request<IntegrationsStatus>('/integrations'),
+  setIntegration: (name: 'mqtt' | 'home-assistant', enabled: boolean) =>
+    request<IntegrationsStatus>(`/integrations/${name}`, { method: 'PUT', body: JSON.stringify({ enabled }) }),
+  mqttCredentials: (deviceId: number) => request<MqttCredentials>(`/devices/${deviceId}/mqtt`),
 
   appOpen: () => request<{ ok: boolean }>('/activity/app-open', { method: 'POST' }),
   activity: (userId: number, type?: string, before?: number) => {
