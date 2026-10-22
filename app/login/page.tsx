@@ -1,6 +1,6 @@
 'use client';
 
-import { CircleAlert, Eye, EyeOff, Sprout } from 'lucide-react';
+import { CircleAlert, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import DownloadAppCard from '@/components/DownloadAppCard';
@@ -46,9 +46,7 @@ export default function LoginPage() {
       </div>
       <form className="card auth-card" onSubmit={submit}>
         <div className="brand">
-          <span className="brand-logo">
-            <Sprout size={20} />
-          </span>
+          <img className="brand-logo" src="/icon.png" alt="" />
           Smart Farm
         </div>
         <div>

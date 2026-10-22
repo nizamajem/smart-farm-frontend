@@ -1083,6 +1083,43 @@ select:focus,
   color: var(--primary);
 }
 
+.download-box {
+  display: grid;
+  gap: 8px;
+}
+
+.install-guide {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.install-guide summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  list-style: none;
+  padding: 4px;
+}
+
+.install-guide summary::-webkit-details-marker {
+  display: none;
+}
+
+.install-guide[open] summary svg {
+  transform: rotate(180deg);
+}
+
+.install-guide ol {
+  margin: 6px 0 0;
+  padding: 12px 12px 12px 30px;
+  background: var(--surface-2);
+  border-radius: 10px;
+  display: grid;
+  gap: 6px;
+}
+
 /* ============ Login ============ */
 .auth-page {
   min-height: 100vh;

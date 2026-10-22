@@ -20,6 +20,8 @@ WORKDIR /app
 RUN npm install -g pm2@6
 COPY --from=build --chown=node:node /app/.next/standalone ./
 COPY --from=build --chown=node:node /app/.next/static ./.next/static
+# Output standalone tidak menyertakan public/ (logo, dll.)
+COPY --from=build --chown=node:node /app/public ./public
 COPY --chown=node:node ecosystem.config.js ./
 USER node
 EXPOSE 3000

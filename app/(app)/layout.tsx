@@ -1,6 +1,6 @@
 'use client';
 
-import { LayoutDashboard, LogOut, Menu, Smartphone, Sprout, Users, X } from 'lucide-react';
+import { LayoutDashboard, LogOut, Menu, Smartphone, Users, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -36,9 +36,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const brand = (
     <Link href="/dashboard" className="brand">
-      <span className="brand-logo">
-        <Sprout size={20} />
-      </span>
+      <img className="brand-logo" src="/icon.png" alt="" />
       Smart Farm
     </Link>
   );
