@@ -40,6 +40,7 @@ export interface Device {
   apiKey: string;
   relayLabels: string[];
   haEntities: HaEntityMap | null;
+  haRelays?: HaRelayMap | null;
   ownerId: number;
   lastSeenAt: string | null;
   createdAt: string;
@@ -52,13 +53,23 @@ export interface RelayCommand {
   relay: number;
   action: 'ON' | 'OFF';
   durationMs: number;
-  status: 'pending' | 'sent' | 'done' | 'expired';
+  status: 'pending' | 'sent' | 'done' | 'expired' | 'failed';
+  transport?: 'device' | 'ha';
   createdAt: string;
   ackAt: string | null;
 }
 
 export type HaMetric = 'temperature' | 'humidity' | 'soilMoisture' | 'lightLux' | 'ph' | 'orp' | 'conductivity' | 'tds' | 'salinity' | 'specificGravity' | 'conductivityFactor';
 export type HaEntityMap = Partial<Record<HaMetric, string>>;
+export type HaRelayKey = 'relay1' | 'relay2' | 'relay3' | 'relay4';
+export type HaRelayMap = Partial<Record<HaRelayKey, string>>;
+export interface HaRelayStatus {
+  relay: number;
+  entityId: string | null;
+  state: 'on' | 'off' | 'unavailable' | 'unmapped';
+  friendlyName: string | null;
+  updatedAt: string | null;
+}
 
 export interface HaHealth {
   status: 'ok' | 'error' | 'not_configured';

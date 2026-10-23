@@ -9,8 +9,6 @@ import type { Device, HaEntityMap, HaHealth, HaMetric, HaState } from '@/lib/typ
 const METRICS: { key: HaMetric; label: string }[] = [
   { key: 'temperature', label: 'Suhu' },
   { key: 'humidity', label: 'Kelembapan udara' },
-  { key: 'soilMoisture', label: 'Kelembapan tanah' },
-  { key: 'lightLux', label: 'Cahaya' },
   { key: 'ph', label: 'pH' },
   { key: 'orp', label: 'ORP (mV)' },
   { key: 'conductivity', label: 'EC (µS/cm)' },

@@ -15,13 +15,14 @@ export default function MqttCard({ deviceId }: { deviceId: number }) {
     const load = () =>
       api
         .mqttCredentials(deviceId)
-        .then(setCred)
+        .then((next) => { setCred(next); setError(''); })
         .catch((e) => setError(e.message));
     load();
     const t = setInterval(load, 10_000);
     return () => clearInterval(t);
   }, [deviceId]);
 
+  if (cred && !cred.enabled) return null;
   if (error) return <div className="card alert error">{error}</div>;
   if (!cred) return null;
 

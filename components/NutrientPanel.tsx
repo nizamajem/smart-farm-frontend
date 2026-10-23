@@ -4,7 +4,7 @@ import { ArrowDown, ArrowRight, ArrowUp, Beaker, Check, ChevronDown, Droplets, F
 import { useEffect, useState } from 'react';
 import Modal from './Modal';
 import { timeAgo } from '@/lib/format';
-import type { Device, RelayCommand, SensorReading } from '@/lib/types';
+import type { Device, HaRelayStatus, RelayCommand, SensorReading } from '@/lib/types';
 
 export const DOSING_CHANNELS = [
   { name: 'Larutan A', purpose: 'Nutrisi utama', letter: 'A', color: 'green', Icon: FlaskConical },
@@ -52,8 +52,8 @@ function readDrafts(key: string): Drafts {
   return { ph, pumps };
 }
 
-export default function NutrientPanel({ device, commands, onSettings }: {
-  device: Device; commands: RelayCommand[]; onSettings: () => void;
+export default function NutrientPanel({ device, commands, relayStates = [], onSettings }: {
+  device: Device; commands: RelayCommand[]; relayStates?: HaRelayStatus[]; onSettings: () => void;
 }) {
   const [example, setExample] = useState(false);
   const [calibration, setCalibration] = useState<Calibration | null>(null);
@@ -131,7 +131,7 @@ export default function NutrientPanel({ device, commands, onSettings }: {
         <section className="card dosing-module" aria-label="Modul dosing empat relay">
           <div className="nutrient-module-head">
             <div className="nutrient-module-title"><span className="nutrient-module-icon"><FlaskConical size={22} /></span><div><h2>Dosing nutrisi</h2><p className="muted small">1 modul relay · 4 kanal larutan</p></div></div>
-            <span className="pill off">Manual</span>
+            <button className="btn sm" onClick={onSettings}>Atur relay</button>
           </div>
           <p className="muted small dosing-description">Setiap kanal memiliki catatan debit sendiri agar volume dosing nantinya dapat dihitung dengan tepat.</p>
           {DOSING_CHANNELS.some((c, i) => device.relayLabels[i] !== c.name) && <p className="dosing-note">Rancangan penamaan kanal di bawah belum diterapkan. Label tersimpan perangkat: {device.relayLabels.join(', ')}.</p>}
@@ -139,15 +139,17 @@ export default function NutrientPanel({ device, commands, onSettings }: {
           <div className="dosing-channels">{DOSING_CHANNELS.map(({ name, purpose, color, letter, Icon }, i) => {
             const draft = drafts.pumps[i];
             const command = commands.find((c) => c.relay === i + 1);
+            const entityId = device.haRelays?.[`relay${i + 1}` as keyof typeof device.haRelays];
+            const state = relayStates.find((s) => s.relay === i + 1 && s.entityId === entityId);
             return <article className={`dosing-channel ${color}`} key={name}>
               <div className="nutrient-row"><span className="dosing-letter">{letter}</span><span className="muted small">Relay {i + 1}</span></div>
               <div className="dosing-name"><h3>{name}</h3><Icon size={18} /></div>
               <p className="muted small">{purpose}</p>
-              <div className="dosing-state"><span className={`dot ${example ? 'example' : ''}`} />{example ? 'Mati · contoh' : 'Status fisik belum tersedia'}</div>
+              <div className="dosing-state"><span className={`dot ${!example && state?.state === 'on' ? 'relay-on' : ''}`} />{example ? 'Mati · contoh' : entityId ? state?.state === 'on' ? 'Nyala · menurut HA' : state?.state === 'off' ? 'Mati · menurut HA' : 'Status HA tidak tersedia' : 'Status fisik belum tersedia'}</div>
               <div className="dosing-rate"><span className="muted small">Debit hasil catatan</span><strong>{draft ? value(Number(draft.volume) / Number(draft.seconds)) : '—'} <small>ml/detik</small></strong></div>
               <button className="btn sm" disabled={example} onClick={() => setCalibration({ kind: 'pump', index: i })}><SlidersHorizontal size={14} />{draft ? 'Lihat catatan uji' : 'Siapkan kalibrasi'}</button>
               <span className={`dosing-caption ${draft ? 'has-draft' : ''}`}>{draft ? 'Catatan lokal · belum diterapkan' : 'Belum ada catatan kalibrasi'}</span>
-              {!example && command && <span className="muted small">Perintah terakhir: {command.action} · {{ pending: 'menunggu', sent: 'terkirim', done: 'dikonfirmasi', expired: 'kedaluwarsa' }[command.status]}</span>}
+              {!example && command && <span className="muted small">Perintah terakhir: {command.action} · {command.transport === 'ha' && command.status === 'done' ? 'layanan HA selesai' : { pending: 'menunggu', sent: 'terkirim', done: 'dikonfirmasi', expired: 'kedaluwarsa', failed: 'gagal' }[command.status]}</span>}
             </article>;
           })}</div>
           <div className="dosing-note"><Info size={16} /><span>Penamaan kanal adalah rancangan panel. Cocokkan kabel dan pemetaan perangkat sebelum digunakan. Status perintah tidak dianggap sebagai status fisik relay.</span></div>

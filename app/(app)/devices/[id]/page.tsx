@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import HomeAssistantCard from '@/components/HomeAssistantCard';
+import HomeAssistantRelayCard from '@/components/HomeAssistantRelayCard';
 import LineChart from '@/components/LineChart';
 import MqttCard from '@/components/MqttCard';
 import NutrientPanel from '@/components/NutrientPanel';
@@ -15,13 +16,14 @@ import { useToast } from '@/components/Toast';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { timeAgo } from '@/lib/format';
-import type { Device, RelayCommand, SensorReading } from '@/lib/types';
+import type { Device, HaRelayStatus, RelayCommand, SensorReading } from '@/lib/types';
 
 const STATUS_LABEL: Record<RelayCommand['status'], string> = {
   pending: 'Menunggu perangkat',
   sent: 'Dikirim ke perangkat',
   done: 'Selesai',
   expired: 'Tidak terkirim',
+  failed: 'Gagal',
 };
 
 const SOURCE_LABEL = { mqtt: 'MQTT', ha: 'Home Assistant', http: 'HTTP' } as const;
@@ -44,6 +46,22 @@ export default function DeviceDetailPage() {
   const [commands, setCommands] = useState<RelayCommand[]>([]);
   const [error, setError] = useState('');
   const [tab, setTab] = useState<Tab>('nutrients');
+  const [relayStates, setRelayStates] = useState<HaRelayStatus[]>([]);
+  const [relayError, setRelayError] = useState('');
+  const relayMap = JSON.stringify(device?.haRelays || {});
+
+  const refreshRelays = useCallback(async () => {
+    if (!Object.values(JSON.parse(relayMap)).some(Boolean)) { setRelayStates([]); setRelayError(''); return; }
+    try { setRelayStates(await api.haRelayStatus(id)); setRelayError(''); }
+    catch (e) { setRelayStates([]); setRelayError((e as Error).message); }
+  }, [id, relayMap]);
+
+  useEffect(() => {
+    setRelayStates([]);
+    refreshRelays();
+    const timer = setInterval(refreshRelays, 5000);
+    return () => clearInterval(timer);
+  }, [refreshRelays]);
 
   const load = useCallback(async () => {
     try {
@@ -102,7 +120,7 @@ export default function DeviceDetailPage() {
         ))}
       </div>
 
-      {tab === 'nutrients' && <NutrientPanel key={device.id} device={device} commands={commands} onSettings={() => setTab('settings')} />}
+      {tab === 'nutrients' && <NutrientPanel key={device.id} device={device} commands={commands} relayStates={relayStates} onSettings={() => setTab('settings')} />}
 
       {tab === 'overview' && (
         <>
@@ -146,7 +164,7 @@ export default function DeviceDetailPage() {
         </>
       )}
 
-      {tab === 'control' && <ControlTab device={device} commands={commands} onSent={load} toast={toast} />}
+      {tab === 'control' && <ControlTab device={device} commands={commands} relayStates={relayStates} relayError={relayError} onSent={() => { load(); refreshRelays(); }} toast={toast} />}
 
       {tab === 'settings' && (
         <SettingsTab
@@ -168,11 +186,15 @@ function ControlTab({
   commands,
   onSent,
   toast,
+  relayStates,
+  relayError,
 }: {
   device: Device;
   commands: RelayCommand[];
   onSent: () => void;
   toast: ReturnType<typeof useToast>;
+  relayStates: HaRelayStatus[];
+  relayError: string;
 }) {
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -180,10 +202,11 @@ function ControlTab({
     setBusy(`${relay}${action}`);
     try {
       await api.sendCommand(device.id, relay, action, action === 'ON' ? 3000 : undefined);
-      toast(`${device.relayLabels[relay - 1]}: perintah ${action === 'ON' ? 'nyalakan' : 'matikan'} dikirim`);
+      toast(`${device.relayLabels[relay - 1]}: ${device.haRelays?.[`relay${relay}` as keyof typeof device.haRelays] ? action === 'ON' ? 'uji selesai, perintah OFF dikirim ke HA' : 'perintah OFF dikirim ke HA' : `perintah ${action === 'ON' ? 'nyalakan' : 'matikan'} dikirim`}`);
       onSent();
     } catch (e) {
       toast((e as Error).message, 'error');
+      onSent();
     } finally {
       setBusy(null);
     }
@@ -197,10 +220,12 @@ function ControlTab({
         <div className="card-head">
           <div>
             <h2>Kontrol relay</h2>
-            <p className="muted small">Saat dinyalakan, relay otomatis mati lagi setelah 3 detik demi keamanan.</p>
+            <p className="muted small">Uji nyala selama 3 detik. Kanal HA menerima perintah OFF dari server setelah uji; kanal MQTT/HTTP mengikuti auto-OFF firmware.</p>
           </div>
         </div>
-        {!device.online && (
+        {device.haRelays && <div className="alert info" style={{ marginBottom: 12 }}>Pastikan auto-OFF perangkat atau otomasi HA juga aktif. Perintah OFF server bergantung pada koneksi HA.</div>}
+        {relayError && <div className="alert error" style={{ marginBottom: 12 }}>{relayError}</div>}
+        {!device.online && !device.haRelays && (
           <div className="alert info" style={{ marginBottom: 12 }}>
             <span>Perangkat sedang offline. Perintah akan menunggu maks. 30 detik, lalu dibatalkan.</span>
           </div>
@@ -208,23 +233,26 @@ function ControlTab({
         <div className="relays">
           {device.relayLabels.map((label, i) => {
             const last = lastFor(i + 1);
+            const haEntity = device.haRelays?.[`relay${i + 1}` as keyof typeof device.haRelays];
+            const state = relayStates.find((s) => s.relay === i + 1 && s.entityId === haEntity);
             return (
               <div key={i} className="relay">
                 <div className="relay-name">
                   <span className="relay-num">{i + 1}</span>
                   <div>
                     <div style={{ fontWeight: 600 }}>{label}</div>
+                    {haEntity && <div className="muted small">HA · {state?.state === 'on' ? 'Nyala' : state?.state === 'off' ? 'Mati' : 'Status belum tersedia'}</div>}
                     <div className="muted small">
-                      {last ? `${last.action === 'ON' ? 'Nyala' : 'Mati'} · ${STATUS_LABEL[last.status].toLowerCase()}` : 'Belum pernah dipakai'}
+                      {last ? `Perintah terakhir: ${last.action === 'ON' ? 'nyalakan' : 'matikan'} · ${STATUS_LABEL[last.status].toLowerCase()}` : 'Belum pernah dipakai'}
                     </div>
                   </div>
                 </div>
                 <div className="relay-actions">
-                  <button className="btn primary sm" disabled={!!busy} onClick={() => send(i + 1, 'ON')}>
+                  <button className="btn primary sm" disabled={!!busy || (!!haEntity && state?.state !== 'off')} onClick={() => send(i + 1, 'ON')}>
                     <Power size={15} />
-                    Nyalakan
+                    Uji 3 detik
                   </button>
-                  <button className="btn sm" disabled={!!busy} onClick={() => send(i + 1, 'OFF')}>
+                  <button className="btn sm" disabled={!!busy && !haEntity} onClick={() => send(i + 1, 'OFF')}>
                     <PowerOff size={15} />
                     Matikan
                   </button>
@@ -252,7 +280,7 @@ function ControlTab({
                   <div className="title">
                     {device.relayLabels[c.relay - 1]} · {c.action === 'ON' ? 'Nyalakan' : 'Matikan'}
                   </div>
-                  <div className="muted small">{timeAgo(c.createdAt)}</div>
+                  <div className="muted small">{timeAgo(c.createdAt)}{c.transport === 'ha' ? ' · Home Assistant' : ''}</div>
                 </div>
                 <span className={`status-text ${c.status}`}>{STATUS_LABEL[c.status]}</span>
               </div>
@@ -305,9 +333,9 @@ function SettingsTab({
 
   return (
     <>
-      <MqttCard deviceId={device.id} />
-
+      {isAdmin && <HomeAssistantRelayCard key={`relays-${device.id}`} device={device} onSaved={onSaved} />}
       {isAdmin && <HomeAssistantCard key={device.id} device={device} onSaved={onSaved} />}
+      <MqttCard deviceId={device.id} />
 
       <div className="card">
         <div className="card-head">

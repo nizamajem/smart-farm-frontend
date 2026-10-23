@@ -1,12 +1,11 @@
 import { Activity } from 'lucide-react';
 import type { SensorReading } from '@/lib/types';
 
-type Key = 'temperature' | 'humidity' | 'soilMoisture';
+type Key = 'temperature' | 'humidity';
 
 const SERIES: { key: Key; label: string; color: string; unit: string }[] = [
   { key: 'temperature', label: 'Suhu', color: 'var(--c-temp)', unit: '°C' },
   { key: 'humidity', label: 'Kelembapan udara', color: 'var(--c-hum)', unit: '%' },
-  { key: 'soilMoisture', label: 'Kelembapan tanah', color: 'var(--c-soil)', unit: '%' },
 ];
 
 const W = 640;

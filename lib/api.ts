@@ -5,6 +5,8 @@ import type {
   AuthResponse,
   Device,
   HaEntityMap,
+  HaRelayMap,
+  HaRelayStatus,
   HaHealth,
   HaState,
   HaSyncResult,
@@ -107,6 +109,9 @@ export const api = {
 
   haHealth: () => request<HaHealth>('/home-assistant/health'),
   haStates: (domain = 'sensor') => request<HaState[]>(`/home-assistant/states?domain=${domain}`),
+  haRelayEntities: () => request<HaState[]>('/home-assistant/relay-entities'),
+  haRelayStatus: (deviceId: number) => request<HaRelayStatus[]>(`/home-assistant/devices/${deviceId}/relays`),
+  setHaRelays: (deviceId: number, map: HaRelayMap) => request<Device>(`/home-assistant/devices/${deviceId}/relays`, { method: 'PUT', body: JSON.stringify(map) }),
   haSync: () => request<HaSyncResult>('/home-assistant/sync', { method: 'POST' }),
   setHaEntities: (deviceId: number, map: HaEntityMap) =>
     request<Device>(`/home-assistant/devices/${deviceId}`, { method: 'PUT', body: JSON.stringify(map) }),

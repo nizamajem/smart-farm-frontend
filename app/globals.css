@@ -1563,6 +1563,10 @@ pre.code {
 .dosing-channel p { margin: -5px 0 0; }
 .dosing-state { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: .72rem; }
 .dosing-state .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+.dosing-state .dot.relay-on { background: var(--primary); }
+.ha-relay-settings .card-head { flex-wrap: wrap; }
+.ha-relay-settings select { min-width: 0; width: 100%; text-overflow: ellipsis; }
+.ha-relay-settings-actions { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 18px; }
 .dosing-rate { border-top: 1px solid var(--border); margin-top: 3px; padding-top: 12px; display: grid; gap: 3px; }
 .dosing-rate .small { font-size: .73rem; }
 .dosing-rate strong { font-size: 1.25rem; font-weight: 600; }
