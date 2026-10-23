@@ -120,7 +120,7 @@ export default function DeviceDetailPage() {
         ))}
       </div>
 
-      {tab === 'nutrients' && <NutrientPanel key={device.id} device={device} commands={commands} relayStates={relayStates} onSettings={() => setTab('settings')} />}
+      {tab === 'nutrients' && <NutrientPanel key={device.id} device={device} commands={commands} relayStates={relayStates} onSettings={() => setTab('settings')} onControl={() => setTab('control')} />}
 
       {tab === 'overview' && (
         <>
