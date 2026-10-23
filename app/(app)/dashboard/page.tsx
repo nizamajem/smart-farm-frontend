@@ -4,7 +4,8 @@ import { ChevronRight, Clock, Cpu, Plus, Sprout, Thermometer, Wifi } from 'lucid
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import { MetricGrid } from '@/components/Metric';
+import { MetricGrid, WaterMetricGrid } from '@/components/Metric';
+import { DOSING_CHANNELS } from '@/components/NutrientPanel';
 import Modal from '@/components/Modal';
 import StatusPill from '@/components/StatusPill';
 import { useToast } from '@/components/Toast';
@@ -121,7 +122,7 @@ export default function DashboardPage() {
               </div>
               <StatusPill online={d.online} />
             </div>
-            <MetricGrid reading={d.latestReading} />
+            {d.relayLabels.includes('Larutan A') || d.latestReading?.ph != null || d.latestReading?.conductivity != null || d.latestReading?.tds != null ? <><div className="muted small" style={{ marginBottom: 12 }}>1 modul sensor air · 4 kanal dosing</div><WaterMetricGrid reading={d.latestReading} /></> : <MetricGrid reading={d.latestReading} />}
             <div className="footer">
               <span>{d.latestReading ? `Diperbarui ${timeAgo(d.latestReading.createdAt)}` : 'Belum ada data sensor'}</span>
               <ChevronRight size={18} />
@@ -147,6 +148,7 @@ export default function DashboardPage() {
 function AddDeviceModal({ onClose, onCreated }: { onClose: () => void; onCreated: (d: Device) => void }) {
   const [name, setName] = useState('');
   const [location, setLocation] = useState('');
+  const [nutrient, setNutrient] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -155,7 +157,7 @@ function AddDeviceModal({ onClose, onCreated }: { onClose: () => void; onCreated
     setBusy(true);
     setError('');
     try {
-      onCreated(await api.createDevice(name.trim(), location.trim()));
+      onCreated(await api.createDevice(name.trim(), location.trim(), nutrient ? DOSING_CHANNELS.map((c) => c.name) : undefined));
     } catch (err) {
       setError((err as Error).message);
       setBusy(false);
@@ -172,6 +174,14 @@ function AddDeviceModal({ onClose, onCreated }: { onClose: () => void; onCreated
         <label className="field">
           Lokasi <span className="hint">Opsional</span>
           <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="mis. Blok A" />
+        </label>
+        <label className="field">
+          Jenis panel
+          <select value={nutrient ? 'nutrient' : 'general'} onChange={(e) => setNutrient(e.target.value === 'nutrient')}>
+            <option value="nutrient">Nutrisi & pH · 1 sensor + 4 relay dosing</option>
+            <option value="general">Greenhouse umum</option>
+          </select>
+          <span className="hint">{nutrient ? 'Relay 1: Larutan A · 2: Larutan B · 3: pH Up · 4: pH Down' : 'Pompa Air, Kipas, Lampu Tumbuh, Pompa Nutrisi'}</span>
         </label>
         <p className="muted small" style={{ margin: 0 }}>
           Setelah dibuat, Anda akan diarahkan ke halaman perangkat untuk menghubungkan sensor.

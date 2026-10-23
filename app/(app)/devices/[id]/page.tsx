@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from 'react';
 import HomeAssistantCard from '@/components/HomeAssistantCard';
 import LineChart from '@/components/LineChart';
 import MqttCard from '@/components/MqttCard';
+import NutrientPanel from '@/components/NutrientPanel';
 import { MetricGrid } from '@/components/Metric';
 import { ConfirmDialog } from '@/components/Modal';
 import StatusPill from '@/components/StatusPill';
@@ -25,8 +26,9 @@ const STATUS_LABEL: Record<RelayCommand['status'], string> = {
 
 const SOURCE_LABEL = { mqtt: 'MQTT', ha: 'Home Assistant', http: 'HTTP' } as const;
 
-type Tab = 'overview' | 'control' | 'settings';
+type Tab = 'nutrients' | 'overview' | 'control' | 'settings';
 const TABS: { id: Tab; label: string; Icon: typeof Gauge }[] = [
+  { id: 'nutrients', label: 'Nutrisi & pH', Icon: Gauge },
   { id: 'overview', label: 'Ringkasan', Icon: Gauge },
   { id: 'control', label: 'Kontrol', Icon: Power },
   { id: 'settings', label: 'Pengaturan', Icon: Settings },
@@ -41,7 +43,7 @@ export default function DeviceDetailPage() {
   const [readings, setReadings] = useState<SensorReading[]>([]);
   const [commands, setCommands] = useState<RelayCommand[]>([]);
   const [error, setError] = useState('');
-  const [tab, setTab] = useState<Tab>('overview');
+  const [tab, setTab] = useState<Tab>('nutrients');
 
   const load = useCallback(async () => {
     try {
@@ -99,6 +101,8 @@ export default function DeviceDetailPage() {
           </button>
         ))}
       </div>
+
+      {tab === 'nutrients' && <NutrientPanel key={device.id} device={device} commands={commands} onSettings={() => setTab('settings')} />}
 
       {tab === 'overview' && (
         <>

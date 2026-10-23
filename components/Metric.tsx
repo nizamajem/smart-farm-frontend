@@ -37,3 +37,16 @@ export function MetricGrid({ reading, wide }: { reading: SensorReading | null | 
     </div>
   );
 }
+
+export function WaterMetricGrid({ reading }: { reading: SensorReading | null | undefined }) {
+  const metrics = [
+    { key: 'ph', label: 'pH air', unit: '', Icon: Droplets, color: 'var(--primary)' },
+    { key: 'conductivity', label: 'EC', unit: 'µS/cm', Icon: Leaf, color: 'var(--info)' },
+    { key: 'tds', label: 'TDS', unit: 'ppm', Icon: Droplets, color: 'var(--c-hum)' },
+    { key: 'temperature', label: 'Suhu air', unit: '°C', Icon: Thermometer, color: 'var(--c-temp)' },
+  ] as const;
+  return <div className="metrics">{metrics.map(({ key, label, unit, Icon, color }) => <div className="metric" key={key}>
+    <div className="metric-icon" style={{ color }}><Icon size={17} /></div>
+    <div><div className="metric-label">{label}</div><div className="metric-value">{reading?.[key] == null ? '—' : reading[key]!.toLocaleString('id-ID', { maximumFractionDigits: 2 })}<span className="metric-unit">{unit}</span></div></div>
+  </div>)}</div>;
+}

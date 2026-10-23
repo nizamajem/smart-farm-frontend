@@ -22,6 +22,13 @@ export interface SensorReading {
   humidity: number | null;
   soilMoisture: number | null;
   lightLux: number | null;
+  ph?: number | null;
+  orp?: number | null;
+  conductivity?: number | null;
+  tds?: number | null;
+  salinity?: number | null;
+  specificGravity?: number | null;
+  conductivityFactor?: number | null;
   source?: 'http' | 'mqtt' | 'ha';
   createdAt: string;
 }
@@ -50,7 +57,7 @@ export interface RelayCommand {
   ackAt: string | null;
 }
 
-export type HaMetric = 'temperature' | 'humidity' | 'soilMoisture' | 'lightLux';
+export type HaMetric = 'temperature' | 'humidity' | 'soilMoisture' | 'lightLux' | 'ph' | 'orp' | 'conductivity' | 'tds' | 'salinity' | 'specificGravity' | 'conductivityFactor';
 export type HaEntityMap = Partial<Record<HaMetric, string>>;
 
 export interface HaHealth {

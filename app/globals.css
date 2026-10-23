@@ -1510,3 +1510,110 @@ pre.code {
   right: 16px;
   width: 220px;
 }
+
+
+/* Panel nutrisi dan persiapan kalibrasi */
+.nutrient-panel { display: grid; gap: 20px; }
+.nutrient-intro, .nutrient-row, .nutrient-module-head, .nutrient-module-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.nutrient-intro { padding: 5px 0 4px; flex-wrap: wrap; }
+.nutrient-eyebrow { color: var(--primary); font-size: .7rem; font-weight: 750; letter-spacing: .11em; }
+.nutrient-intro h2 { font-size: 1.6rem; letter-spacing: -.035em; margin-top: 7px; }
+.nutrient-intro p { margin: 8px 0 0; }
+.nutrient-connect { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px 20px; background: var(--info-soft); border: 1px solid var(--border); border-radius: 12px; }
+.nutrient-connect p { margin: 4px 0 0; font-size: .85rem; color: var(--muted); }
+.nutrient-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr); gap: 20px; align-items: start; }
+.nutrient-layout > .card { margin: 0; padding: 24px; min-width: 0; }
+.nutrient-module-head { align-items: start; flex-wrap: wrap; }
+.nutrient-module-title { display: flex; align-items: center; gap: 12px; }
+.nutrient-module-title h2 { font-size: 1.12rem; }
+.nutrient-module-title p { margin: 5px 0 0; }
+.nutrient-module-icon { display: grid; place-items: center; width: 44px; height: 44px; background: var(--primary-soft); color: var(--primary); border-radius: 14px; flex-shrink: 0; }
+.ph-focus { padding: 22px; margin: 24px 0 16px; border-radius: 16px; background: linear-gradient(135deg, var(--primary-soft), var(--surface-2)); border: 1px solid var(--border); }
+.ph-number { font-size: 3.5rem; font-weight: 650; letter-spacing: -.055em; line-height: 1.2; margin: 14px 0 24px; font-variant-numeric: tabular-nums; }
+.ph-number > span { font-size: .8rem; font-weight: 450; color: var(--muted); letter-spacing: 0; margin-left: 14px; }
+.ph-scale { height: 7px; border-radius: 10px; position: relative; background: linear-gradient(90deg, #dc8068, #d7b950 25%, #73a768 50%, #55a4b2 75%, #9182b6); }
+.ph-marker { position: absolute; top: -5px; height: 17px; width: 7px; border: 2px solid var(--surface); background: var(--text); border-radius: 5px; transform: translateX(-50%); box-shadow: 0 0 0 1px var(--text); }
+.ph-scale-label { display: flex; justify-content: space-between; margin-top: 10px; font-size: .7rem; color: var(--muted); }
+.ph-focus p { margin: 17px 0 0; }
+.water-key-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.water-key-metrics > div { padding: 16px; border: 1px solid var(--border); border-radius: 12px; display: grid; gap: 8px; }
+.water-metric-label { display: flex; align-items: center; gap: 7px; font-size: .76rem; color: var(--muted); }
+.water-key-metrics strong { font-size: 1.6rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.water-key-metrics small, .water-detail small, .dosing-rate small, .calibration-result small { font-size: .75rem; font-weight: 450; color: var(--muted); }
+.water-details { margin-top: 22px; }
+.water-details > summary { display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: .85rem; cursor: pointer; padding: 0 0 14px; list-style: none; }
+.water-details > summary::-webkit-details-marker { display: none; }
+.water-details:not([open]) > summary svg { transform: rotate(-90deg); }
+.water-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+.water-detail { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-top: 1px solid var(--border); min-width: 0; }
+.water-detail > svg { color: var(--muted); flex-shrink: 0; }
+.water-detail strong { display: block; font-size: .95rem; font-weight: 600; }
+.water-detail .small { font-size: .73rem; }
+.nutrient-module-foot { border-top: 1px solid var(--border); margin-top: 10px; padding-top: 18px; flex-wrap: wrap; }
+.dosing-description { margin: 22px 0 18px; }
+.dosing-channels { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.dosing-channel { --channel-color: var(--primary); --channel-bg: var(--primary-soft); border: 1px solid var(--border); border-radius: 14px; padding: 17px; display: flex; flex-direction: column; gap: 10px; background: var(--surface); }
+.dosing-channel.blue { --channel-color: var(--info); --channel-bg: var(--info-soft); }
+.dosing-channel.amber { --channel-color: var(--warning); --channel-bg: var(--warning-soft); }
+.dosing-channel.violet { --channel-color: #a186d4; --channel-bg: rgba(145, 116, 193, .13); }
+.dosing-letter { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; color: var(--channel-color); background: var(--channel-bg); font-size: 1rem; font-weight: 700; }
+.dosing-name { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 5px; }
+.dosing-name h3 { font-size: 1.06rem; }
+.dosing-name > svg { color: var(--channel-color); }
+.dosing-channel p { margin: -5px 0 0; }
+.dosing-state { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: .72rem; }
+.dosing-state .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+.dosing-rate { border-top: 1px solid var(--border); margin-top: 3px; padding-top: 12px; display: grid; gap: 3px; }
+.dosing-rate .small { font-size: .73rem; }
+.dosing-rate strong { font-size: 1.25rem; font-weight: 600; }
+.dosing-channel .btn { width: 100%; margin-top: 5px; white-space: normal; }
+.dosing-caption { color: var(--muted); font-size: .68rem; text-align: center; }
+.dosing-caption.has-draft { color: var(--warning); }
+.dosing-note { display: flex; gap: 9px; background: var(--surface-2); color: var(--muted); padding: 13px; border-radius: 10px; font-size: .75rem; margin-top: 18px; }
+.dosing-note > svg { flex-shrink: 0; margin-top: 2px; }
+.nutrient-readiness.card { margin: 0; padding: 24px; }
+.nutrient-readiness h2 { margin-top: 8px; }
+.nutrient-readiness p { margin: 6px 0 0; }
+.nutrient-checklist { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 22px; }
+.nutrient-checklist > div { display: flex; align-items: center; gap: 10px; border: 1px solid var(--border); border-radius: 12px; padding: 13px; }
+.nutrient-checklist > div > span { display: grid; place-items: center; width: 28px; height: 28px; background: var(--surface-2); border-radius: 50%; font-size: .8rem; color: var(--muted); flex-shrink: 0; }
+.nutrient-checklist > div > .ready { background: var(--primary-soft); color: var(--primary); }
+.nutrient-checklist p { margin: 0; }
+.nutrient-checklist b { display: block; font-size: .83rem; font-weight: 600; }
+.nutrient-checklist small { display: block; font-size: .73rem; color: var(--muted); margin-top: 3px; }
+.calibration-form { display: grid; gap: 20px; }
+.calibration-steps { display: flex; gap: 12px; list-style: none; margin: 0; padding: 0; }
+.calibration-steps li { display: flex; align-items: center; gap: 6px; font-size: .72rem; color: var(--muted); flex: 1; }
+.calibration-steps li > span { display: grid; place-items: center; border-radius: 50%; width: 24px; height: 24px; background: var(--surface-2); flex-shrink: 0; }
+.calibration-steps .current { color: var(--primary); font-weight: 650; }
+.calibration-steps .current > span, .calibration-steps .complete > span { background: var(--primary-soft); color: var(--primary); }
+.calibration-instructions { padding-left: 20px; margin: 0; display: grid; gap: 14px; color: var(--muted); font-size: .88rem; }
+.calibration-form > p { margin: 0; }
+.calibration-agree { display: flex; gap: 10px; align-items: flex-start; font-size: .83rem; padding: 14px; border: 1px solid var(--border); border-radius: 10px; }
+.calibration-agree input { margin: 4px 0 0; accent-color: var(--primary); }
+.calibration-results { display: grid; gap: 8px; }
+.calibration-results > div { display: flex; justify-content: space-between; padding: 14px; border-radius: 10px; background: var(--surface-2); }
+.calibration-result { padding: 24px; background: var(--primary-soft); border-radius: 14px; text-align: center; }
+.calibration-result > span { font-size: .85rem; color: var(--muted); }
+.calibration-result strong { display: block; font-size: 2.5rem; color: var(--primary); margin: 8px 0; }
+.calibration-result p { margin: 0; font-size: .85rem; color: var(--muted); }
+.calibration-save-note { padding: 12px; background: var(--warning-soft); color: var(--text); border-radius: 10px; font-size: .8rem; }
+.calibration-actions { display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid var(--border); padding-top: 18px; }
+@media (max-width: 1150px) {
+  .nutrient-layout { grid-template-columns: 1fr; }
+  .nutrient-checklist { grid-template-columns: 1fr; gap: 8px; }
+}
+@media (max-width: 540px) {
+  .nutrient-intro h2 { font-size: 1.3rem; }
+  .nutrient-layout > .card, .nutrient-readiness.card { padding: 17px; }
+  .nutrient-connect { flex-direction: column; align-items: start; }
+  .dosing-channels { gap: 10px; }
+  .dosing-channel { padding: 12px; }
+  .dosing-name h3 { font-size: .96rem; }
+  .dosing-state { font-size: .68rem; align-items: start; }
+  .dosing-state .dot { margin-top: 4px; }
+  .water-key-metrics { grid-template-columns: 1fr; }
+  .ph-focus { padding: 16px; }
+  .calibration-steps { gap: 6px; }
+  .calibration-steps li { flex-direction: column; align-items: start; gap: 6px; }
+}
