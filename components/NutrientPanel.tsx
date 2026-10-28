@@ -3,6 +3,7 @@
 import { ArrowDown, ArrowRight, ArrowUp, Beaker, Check, ChevronDown, Droplets, FlaskConical, Gauge, Info, SlidersHorizontal, Thermometer, Waves, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Modal from './Modal';
+import { MixPlanner, WaterGuide } from './NutrientGuide';
 import { timeAgo } from '@/lib/format';
 import type { Device, HaRelayStatus, RelayCommand, SensorReading } from '@/lib/types';
 
@@ -15,7 +16,7 @@ export const DOSING_CHANNELS = [
 
 // Snapshot supplied by the user. Never saved as a live sensor reading.
 const REFERENCE: Partial<SensorReading> = {
-  ph: null, temperature: 26.4, orp: -1633, conductivity: 0, tds: 0,
+  ph: 6.4, temperature: 26.4, orp: -1633, conductivity: 1500, tds: 750,
   salinity: 0, specificGravity: 0.996, conductivityFactor: 0, humidity: 0,
 };
 
@@ -56,6 +57,7 @@ export default function NutrientPanel({ device, commands, relayStates = [], onSe
   device: Device; commands: RelayCommand[]; relayStates?: HaRelayStatus[]; onSettings: () => void; onControl: () => void;
 }) {
   const [example, setExample] = useState(false);
+  const [view, setView] = useState<'water' | 'mix' | 'pumps'>('water');
   const [calibration, setCalibration] = useState<Calibration | null>(null);
   const [drafts, setDrafts] = useState<Drafts>({ pumps: {} });
   const [storageError, setStorageError] = useState('');
@@ -86,7 +88,7 @@ export default function NutrientPanel({ device, commands, relayStates = [], onSe
       <div className="nutrient-intro">
         <div>
           <h2>Air dan nutrisi tanaman</h2>
-          <p>Lihat kondisi air dan periksa keempat pompa larutan.</p>
+          <p>Tanaman senang, merawatnya pun jadi gampang.</p>
         </div>
         <button className="btn" onClick={onSettings}>Pengaturan alat <ArrowRight size={20} /></button>
       </div>
@@ -95,8 +97,15 @@ export default function NutrientPanel({ device, commands, relayStates = [], onSe
       {!example && !measured && <div className="nutrient-connect"><div><b>Angka dari alat belum masuk</b><p>Minta pendamping memeriksa sambungan alat. Angka akan muncul setelah alat mengirim data.</p></div><button className="btn" onClick={onSettings}>Periksa sambungan <ArrowRight size={20} /></button></div>}
       {storageError && <div className="alert error" role="alert">{storageError}</div>}
 
-      <div className="nutrient-layout">
-        <section className="card water-module" aria-label="Kondisi air">
+      <div className="garden-tabs" role="group" aria-label="Pilih kegiatan">
+        <button className="btn" aria-pressed={view === 'water'} onClick={() => setView('water')}>?? Cek Air</button>
+        <button className="btn" aria-pressed={view === 'mix'} onClick={() => setView('mix')}>?? Campur Nutrisi</button>
+        <button className="btn" aria-pressed={view === 'pumps'} onClick={() => setView('pumps')}>?? Pengaturan Pompa</button>
+      </div>
+      {view === 'water' && <WaterGuide reading={example ? { ...REFERENCE, createdAt: new Date().toISOString() } : reading} online={example || device.online} />}
+      {view === 'mix' && <><MixPlanner pumps={drafts.pumps} /><button className="btn" onClick={() => setView('water')}>Selesai menakar? Cek airnya ?</button></>}
+      <div className="nutrient-layout" hidden={view === 'mix'}>
+        <section className="card water-module" aria-label="Kondisi air" hidden={view !== 'water'}>
           <div className="nutrient-module-head">
             <div className="nutrient-module-title"><span className="nutrient-module-icon"><Waves size={26} /></span><h2>Kondisi air</h2></div>
             <span className={`pill ${example ? 'warn' : measured && device.online ? 'ok' : 'off'}`}>{example ? 'Contoh' : measured ? device.online ? 'Alat terhubung' : 'Alat tidak terhubung' : 'Menunggu alat'}</span>
@@ -125,7 +134,7 @@ export default function NutrientPanel({ device, commands, relayStates = [], onSe
           </details>
         </section>
 
-        <section className="card dosing-module" aria-label="Empat pompa larutan">
+        <section className="card dosing-module" aria-label="Empat pompa larutan" hidden={view !== 'pumps'}>
           <div className="nutrient-module-title"><span className="nutrient-module-icon"><FlaskConical size={26} /></span><h2>Empat pompa larutan</h2></div>
           <p className="dosing-description">Setiap pompa mengalirkan satu jenis larutan.</p>
           {DOSING_CHANNELS.some((c, i) => device.relayLabels[i] !== c.name) && <p className="dosing-note">Nama pompa belum dicocokkan dengan alat. Minta pendamping memeriksa Pengaturan alat sebelum menjalankan pompa.</p>}

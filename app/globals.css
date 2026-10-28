@@ -1668,3 +1668,31 @@ pre.code {
   .calibration-steps { gap: 6px; }
   .calibration-steps li { flex-direction: column; align-items: start; gap: 6px; }
 }
+.garden-tabs { display: flex; flex-wrap: wrap; gap: 10px; padding: 8px; background: var(--surface-2); border-radius: 22px; }
+.garden-tabs .btn { flex: 1; border-radius: 16px; min-height: 58px; }
+.garden-tabs .btn[aria-pressed=true] { background: var(--primary); color: white; }
+.garden-guide, .garden-mix { display: grid; gap: 22px; }
+.garden-guide { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 28px; }
+.garden-welcome { display: flex; align-items: center; gap: 16px; }
+.garden-welcome > span { display: grid; place-items: center; flex-shrink: 0; font-size: 36px; width: 72px; height: 72px; background: var(--primary-soft); border-radius: 24px; }
+.garden-welcome p { margin: 6px 0 0; }
+.garden-guide select, .garden-mix input[type=number] { width: 100%; min-height: 50px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); font: inherit; }
+.garden-status-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.garden-status { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 24px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 22px; }
+.garden-status strong { font-size: 2.8rem; line-height: 1.2; }
+.garden-status strong small { font-size: 1rem; font-weight: 400; }
+.garden-status b { padding: 7px 12px; border-radius: 12px; background: var(--surface); }
+.garden-status-ok { border-color: var(--primary); background: var(--primary-soft); }
+.garden-status-low, .garden-status-high, .garden-status-invalid { border-color: var(--warning); background: var(--warning-soft); }
+.garden-status p { margin: 0; line-height: 1.65; }
+.garden-range { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; gap: 5px; margin-top: auto; font-size: .85rem; }
+.garden-range span { padding: 10px 4px; text-align: center; background: var(--surface); border-radius: 10px; }
+.garden-range span:nth-child(2) { border: 1px solid var(--primary); }
+.garden-footnote { color: var(--muted); font-size: .9rem; line-height: 1.65; margin: 0; }
+.garden-guide summary { cursor: pointer; min-height: 44px; }
+.garden-guide a { text-decoration: underline; }
+.garden-next { padding: 20px; border-radius: 18px; background: var(--primary-soft); }
+.garden-next p { margin-bottom: 0; }
+.nutrient-panel [hidden] { display: none !important; }
+.garden-tabs .btn:focus-visible, .garden-guide select:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+@media (max-width: 640px) { .garden-status-grid { grid-template-columns: 1fr; } .garden-guide { padding: 18px; } .garden-tabs .btn { flex-basis: 100%; } .garden-range { font-size: .8rem; } }
