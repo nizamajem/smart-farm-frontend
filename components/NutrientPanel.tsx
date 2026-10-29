@@ -3,6 +3,7 @@
 import { ArrowDown, ArrowRight, ArrowUp, Beaker, Check, ChevronDown, Droplets, FlaskConical, Gauge, Info, SlidersHorizontal, Settings, Thermometer, Waves, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Modal from './Modal';
+import TankFlow from './TankFlow';
 import { MixPlanner, WaterGuide } from './NutrientGuide';
 import { timeAgo } from '@/lib/format';
 import type { Device, HaRelayStatus, RelayCommand, SensorReading } from '@/lib/types';
@@ -44,7 +45,7 @@ function readDrafts(key: string): Drafts {
   for (let i = 0; i < 4; i++) {
     const p = data?.pumps?.[i];
     if (p && typeof p.seconds === 'string' && typeof p.volume === 'string' && typeof p.savedAt === 'string' &&
-      Number(p.seconds) >= 0.5 && Number(p.seconds) <= 3 && Number(p.volume) > 0 && Number.isFinite(Number(p.volume))) pumps[i] = p;
+      Number(p.seconds) >= 0.5 && Number.isFinite(Number(p.seconds)) && Number(p.volume) > 0 && Number.isFinite(Number(p.volume))) pumps[i] = p;
   }
   const p = data?.ph;
   const ph = p && typeof p.neutral === 'string' && typeof p.acid === 'string' && typeof p.savedAt === 'string' &&
@@ -57,7 +58,7 @@ export default function NutrientPanel({ device, commands, relayStates = [], onSe
   device: Device; commands: RelayCommand[]; relayStates?: HaRelayStatus[]; onSettings: () => void; onControl: () => void;
 }) {
   const [example, setExample] = useState(false);
-  const [view, setView] = useState<'water' | 'mix' | 'pumps'>('water');
+  const [view, setView] = useState<'water' | 'mix' | 'pumps' | 'flow'>('water');
   const [calibration, setCalibration] = useState<Calibration | null>(null);
   const [drafts, setDrafts] = useState<Drafts>({ pumps: {} });
   const [storageError, setStorageError] = useState('');
@@ -98,10 +99,12 @@ export default function NutrientPanel({ device, commands, relayStates = [], onSe
         <button className="btn" aria-pressed={view === 'water'} onClick={() => setView('water')}><Droplets size={20} /> Cek Air</button>
         <button className="btn" aria-pressed={view === 'mix'} onClick={() => setView('mix')}><FlaskConical size={20} /> Campur Nutrisi</button>
         <button className="btn" aria-pressed={view === 'pumps'} onClick={() => setView('pumps')}><Settings size={20} /> Pompa</button>
+        <button className="btn" aria-pressed={view === 'flow'} onClick={() => setView('flow')}><Waves size={20} /> Aliran Air</button>
       </div>
       {view === 'water' && <WaterGuide key={String(example)} deviceId={device.id} example={example} reading={example ? { ...REFERENCE, createdAt: new Date().toISOString() } : reading} online={example || device.online} />}
-      {view === 'mix' && <MixPlanner pumps={drafts.pumps} onCheckWater={() => setView('water')} />}
-      <div className="nutrient-layout" hidden={view === 'mix'}>
+      {view === 'flow' && <TankFlow />}
+      {view === 'mix' && <MixPlanner pumps={drafts.pumps} onCheckWater={() => setView('water')} onCalibration={index => setCalibration({ kind: 'pump', index })} />}
+      <div className="nutrient-layout" hidden={view === 'mix' || view === 'flow'}>
         <details className="card water-module simple-sensor-details" hidden={view !== 'water'}>
           <summary>Detail sensor & pemeriksaan pH</summary>
           <p>Suhu air: {value(reading?.temperature)} °C</p>
@@ -123,7 +126,7 @@ export default function NutrientPanel({ device, commands, relayStates = [], onSe
               <div className="pump-heading"><span className="dosing-letter" aria-hidden="true">{letter}</span><div><h3>{displayName}</h3><p>{purpose}</p></div></div>
               <div className={`dosing-state ${!example && state?.state === 'on' ? 'pump-running' : ''}`}><span className="dot" />{status}</div>
               <details className="pump-measurement">
-                <summary>Catatan takaran pompa <ChevronDown size={20} /></summary>
+                <summary>Kalibrasi durasi relay <ChevronDown size={20} /></summary>
                 <p>{draft ? `Hasil catatan: ${value(Number(draft.volume) / Number(draft.seconds))} ml setiap detik.` : 'Belum ada catatan jumlah larutan yang keluar.'}</p>
                 <button className="btn" disabled={example} onClick={() => setCalibration({ kind: 'pump', index: i })}>{draft ? 'Lihat atau ubah catatan' : 'Catat hasil pengukuran'}</button>
                 {draft && <p className="dosing-caption">Catatan hanya tersimpan di browser ini. Belum mengubah kerja pompa.</p>}
@@ -153,12 +156,12 @@ function CalibrationDialog({ calibration, drafts, onClose, onSave, error }: {
   const isPh = calibration.kind === 'ph';
   const index = calibration.kind === 'pump' ? calibration.index : 0;
   const [step, setStep] = useState(0);
-  const [seconds, setSeconds] = useState(drafts.pumps[index]?.seconds || '3');
+  const [seconds, setSeconds] = useState(drafts.pumps[index]?.seconds || '');
   const [volume, setVolume] = useState(drafts.pumps[index]?.volume || '');
   const [neutral, setNeutral] = useState(drafts.ph?.neutral || '');
   const [acid, setAcid] = useState(drafts.ph?.acid || '');
   const [ready, setReady] = useState(false);
-  const valid = isPh ? neutral.trim() !== '' && acid.trim() !== '' && [neutral, acid].every((n) => Number.isFinite(Number(n)) && Number(n) >= 0 && Number(n) <= 14) : Number(seconds) >= 0.5 && Number(seconds) <= 3 && Number(volume) > 0 && Number.isFinite(Number(volume));
+  const valid = isPh ? neutral.trim() !== '' && acid.trim() !== '' && [neutral, acid].every((n) => Number.isFinite(Number(n)) && Number(n) >= 0 && Number(n) <= 14) : Number(seconds) >= 0.5 && Number.isFinite(Number(seconds)) && Number(volume) > 0 && Number.isFinite(Number(volume));
   const title = isPh ? 'Periksa ketepatan alat pH' : `Catat takaran · ${DOSING_CHANNELS[index].displayName}`;
   const steps = ['Siapkan alat', 'Isi hasil ukur', 'Periksa dan simpan'];
   function submit(e: React.FormEvent) {
@@ -168,13 +171,26 @@ function CalibrationDialog({ calibration, drafts, onClose, onSave, error }: {
     const savedAt = new Date().toISOString();
     onSave(isPh ? { ...drafts, ph: { neutral, acid, savedAt } } : { ...drafts, pumps: { ...drafts.pumps, [index]: { seconds, volume, savedAt } } });
   }
+  if (!isPh) return <Modal title={`Kalibrasi relay ${DOSING_CHANNELS[index].name}`} onClose={onClose}>
+    <form className="simple-mix-form" onSubmit={e => { e.preventDefault(); if (valid) onSave({ ...drafts, pumps: { ...drafts.pumps, [index]: { seconds, volume, savedAt: new Date().toISOString() } } }); }}>
+      <p>Isi hasil uji manual. Form ini tidak menyalakan relay.</p>
+      <div className="simple-fields two">
+        <label className="field">Lama menyala (detik)<input type="number" min="0.5" step="any" required value={seconds} onChange={e => setSeconds(e.target.value)} placeholder="Contoh: 60" /></label>
+        <label className="field">Larutan terkumpul (ml)<input type="number" min="0" step="any" required value={volume} onChange={e => setVolume(e.target.value)} placeholder="Contoh: 50" /></label>
+      </div>
+      <small>60 detik = 1 menit. Gunakan hasil ukur sendiri.</small>
+      <small>Kalibrasi tersimpan di browser ini.</small>
+      {error && <p role="alert">{error}</p>}
+      <button className="btn primary simple-action" disabled={!valid}>Simpan Kalibrasi</button>
+    </form>
+  </Modal>;
   return <Modal title={title} onClose={onClose}>
     <form className="calibration-form" onSubmit={submit}>
       <ol className="calibration-steps" aria-label="Tahapan kalibrasi">{steps.map((label, i) => <li key={label} className={step === i ? 'current' : step > i ? 'complete' : ''} aria-current={step === i ? 'step' : undefined}><span>{step > i ? <Check size={13} /> : i + 1}</span>{label}</li>)}</ol>
       <div className="alert info"><Info size={17} /><span>Form ini hanya mencatat hasil uji. Mengisi form tidak menyalakan pompa atau mengubah pengaturan alat.</span></div>
       {step === 0 && <>
         <h3>{isPh ? 'Siapkan alat dan larutan pembanding' : 'Siapkan satu pompa dan gelas ukur'}</h3>
-        <ol className="calibration-instructions">{(isPh ? ['Siapkan larutan pembanding pH 7,00 dan pH 4,00 dalam dua wadah terpisah.', 'Bilas ujung alat ukur dengan air bersih. Ikuti petunjuk pemeriksaan dari pembuat alat.', 'Celupkan alat ke setiap larutan pembanding secara bergantian. Tunggu angkanya berhenti berubah, lalu catat.'] : [`Minta pendamping memastikan pompa ${DOSING_CHANNELS[index].name} sudah tersambung dengan benar.`, 'Siapkan gelas ukur pada keluaran pompa dan pastikan selang sudah terisi.', 'Jalankan pompa dari alat selama 0,5–3 detik. Catat berapa detik pompa berjalan dan berapa ml larutan yang tertampung.']).map((s) => <li key={s}>{s}</li>)}</ol>
+        <ol className="calibration-instructions">{(isPh ? ['Siapkan larutan pembanding pH 7,00 dan pH 4,00 dalam dua wadah terpisah.', 'Bilas ujung alat ukur dengan air bersih. Ikuti petunjuk pemeriksaan dari pembuat alat.', 'Celupkan alat ke setiap larutan pembanding secara bergantian. Tunggu angkanya berhenti berubah, lalu catat.'] : [`Minta pendamping memastikan pompa ${DOSING_CHANNELS[index].name} sudah tersambung dengan benar.`, 'Siapkan gelas ukur pada keluaran pompa dan pastikan selang sudah terisi.', 'Catat lama relay menyala dan volume dari uji manual. Form ini tidak menjalankan relay.']).map((s) => <li key={s}>{s}</li>)}</ol>
         <label className="calibration-agree"><input type="checkbox" checked={ready} onChange={(e) => setReady(e.target.checked)} />Saya sudah menyiapkan alat dan memahami langkahnya.</label>
       </>}
       {step === 1 && <>
@@ -184,13 +200,13 @@ function CalibrationDialog({ calibration, drafts, onClose, onSave, error }: {
           <label className="field">Angka alat pada larutan pH 7,00<input type="number" min="0" max="14" step="any" required value={neutral} onChange={(e) => setNeutral(e.target.value)} placeholder="Contoh: 6,85" autoFocus /><span className="hint">Tulis angka yang tampil pada alat</span></label>
           <label className="field">Angka alat pada larutan pH 4,00<input type="number" min="0" max="14" step="any" required value={acid} onChange={(e) => setAcid(e.target.value)} placeholder="Contoh: 4,12" /><span className="hint">Tulis angka yang tampil pada alat</span></label>
         </> : <>
-          <label className="field">Lama pompa berjalan (detik)<input type="number" min="0.5" max="3" step="any" required value={seconds} onChange={(e) => setSeconds(e.target.value)} autoFocus /><span className="hint">Contoh: 3 berarti pompa berjalan 3 detik</span></label>
+          <label className="field">Lama pompa berjalan (detik)<input type="number" min="0.5" step="any" required value={seconds} onChange={(e) => setSeconds(e.target.value)} autoFocus /><span className="hint">Contoh: 60 detik = 1 menit</span></label>
           <label className="field">Larutan yang terkumpul (ml)<input type="number" min="0.001" step="any" required value={volume} onChange={(e) => setVolume(e.target.value)} placeholder="Contoh: 12" /><span className="hint">Baca angka pada gelas ukur setelah uji</span></label>
         </>}</div>
       </>}
       {step === 2 && <>
         <h3>Periksa sebelum menyimpan catatan</h3>
-        {isPh ? <div className="calibration-results"><div><span>Larutan pembanding pH 7,00</span><strong>{value(Number(neutral))}</strong></div><div><span>Larutan pembanding pH 4,00</span><strong>{value(Number(acid))}</strong></div></div> : <div className="calibration-result"><span>Debit {DOSING_CHANNELS[index].name}</span><strong>{value(Number(volume) / Number(seconds))} <small>ml/detik</small></strong><p>{value(Number(volume))} ml ÷ {value(Number(seconds))} detik</p></div>}
+        {isPh ? <div className="calibration-results"><div><span>Larutan pembanding pH 7,00</span><strong>{value(Number(neutral))}</strong></div><div><span>Larutan pembanding pH 4,00</span><strong>{value(Number(acid))}</strong></div></div> : <div className="calibration-result"><span>Takaran waktu {DOSING_CHANNELS[index].name}</span><strong>{value(Number(volume) / Number(seconds))} <small>ml/detik</small></strong><p>{value(Number(volume))} ml ÷ {value(Number(seconds))} detik</p></div>}
         <p className="muted small">{isPh ? 'Catatan ini membantu pendamping memeriksa ketepatan alat. Penyetelan alat dilakukan sesuai petunjuk pembuatnya.' : 'Angka ini adalah jumlah larutan yang keluar setiap detik. Ulangi pengukuran untuk memastikan hasilnya tetap sama.'}</p>
         <div className="calibration-save-note">Catatan disimpan di browser ini. Kerja alat dan pompa belum berubah.</div>
       </>}
