@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowDown, ArrowRight, ArrowUp, Beaker, Check, ChevronDown, Droplets, FlaskConical, Gauge, Info, SlidersHorizontal, Thermometer, Waves, Zap } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUp, Beaker, Check, ChevronDown, Droplets, FlaskConical, Gauge, Info, SlidersHorizontal, Settings, Thermometer, Waves, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Modal from './Modal';
 import { MixPlanner, WaterGuide } from './NutrientGuide';
@@ -68,9 +68,6 @@ export default function NutrientPanel({ device, commands, relayStates = [], onSe
   }, [storageKey]);
 
   const reading = example ? REFERENCE : device.latestReading;
-  const ph = reading?.ph;
-  const hasPh = ph != null && Number.isFinite(ph);
-  const phValid = hasPh && ph >= 0 && ph <= 14;
   const measured = [reading?.ph, reading?.conductivity, reading?.tds].some((n) => n != null);
   const pumpCount = Object.keys(drafts.pumps).length;
 
@@ -88,7 +85,7 @@ export default function NutrientPanel({ device, commands, relayStates = [], onSe
       <div className="nutrient-intro">
         <div>
           <h2>Air dan nutrisi tanaman</h2>
-          <p>Tanaman senang, merawatnya pun jadi gampang.</p>
+          
         </div>
         <button className="btn" onClick={onSettings}>Pengaturan alat <ArrowRight size={20} /></button>
       </div>
@@ -98,41 +95,19 @@ export default function NutrientPanel({ device, commands, relayStates = [], onSe
       {storageError && <div className="alert error" role="alert">{storageError}</div>}
 
       <div className="garden-tabs" role="group" aria-label="Pilih kegiatan">
-        <button className="btn" aria-pressed={view === 'water'} onClick={() => setView('water')}>?? Cek Air</button>
-        <button className="btn" aria-pressed={view === 'mix'} onClick={() => setView('mix')}>?? Campur Nutrisi</button>
-        <button className="btn" aria-pressed={view === 'pumps'} onClick={() => setView('pumps')}>?? Pengaturan Pompa</button>
+        <button className="btn" aria-pressed={view === 'water'} onClick={() => setView('water')}><Droplets size={20} /> Cek Air</button>
+        <button className="btn" aria-pressed={view === 'mix'} onClick={() => setView('mix')}><FlaskConical size={20} /> Campur Nutrisi</button>
+        <button className="btn" aria-pressed={view === 'pumps'} onClick={() => setView('pumps')}><Settings size={20} /> Pompa</button>
       </div>
-      {view === 'water' && <WaterGuide reading={example ? { ...REFERENCE, createdAt: new Date().toISOString() } : reading} online={example || device.online} />}
-      {view === 'mix' && <><MixPlanner pumps={drafts.pumps} /><button className="btn" onClick={() => setView('water')}>Selesai menakar? Cek airnya ?</button></>}
+      {view === 'water' && <WaterGuide key={String(example)} deviceId={device.id} example={example} reading={example ? { ...REFERENCE, createdAt: new Date().toISOString() } : reading} online={example || device.online} />}
+      {view === 'mix' && <MixPlanner pumps={drafts.pumps} onCheckWater={() => setView('water')} />}
       <div className="nutrient-layout" hidden={view === 'mix'}>
-        <section className="card water-module" aria-label="Kondisi air" hidden={view !== 'water'}>
-          <div className="nutrient-module-head">
-            <div className="nutrient-module-title"><span className="nutrient-module-icon"><Waves size={26} /></span><h2>Kondisi air</h2></div>
-            <span className={`pill ${example ? 'warn' : measured && device.online ? 'ok' : 'off'}`}>{example ? 'Contoh' : measured ? device.online ? 'Alat terhubung' : 'Alat tidak terhubung' : 'Menunggu alat'}</span>
-          </div>
-          <div className="ph-focus">
-            <h3>Keasaman air (pH)</h3>
-            <div className="ph-number">{value(ph)}<span>{phValid ? 'pH' : hasPh ? 'perlu diperiksa' : 'Belum terbaca'}</span></div>
-            <div className="ph-scale" aria-label="Skala keasaman air 0 sampai 14">{phValid && <span className="ph-marker" style={{ left: `${ph / 14 * 100}%` }} />}</div>
-            <div className="ph-scale-label"><span>Asam</span><span>Netral (7)</span><span>Basa</span></div>
-            <p>{phValid ? 'Angka ini menunjukkan keasaman air. Patokan yang sesuai bergantung pada tanaman.' : hasPh ? 'Angka berada di luar skala pH. Minta pendamping memeriksa alat.' : 'Alat belum memberikan angka pH. Jangan menambah larutan pengubah pH berdasarkan angka kosong.'}</p>
-          </div>
-          <div className="water-key-metrics">
-            <div><span className="water-metric-label"><Droplets size={22} />Kepekatan nutrisi (TDS)</span><strong>{value(reading?.tds)} <small>ppm</small></strong><span>Menunjukkan banyaknya zat terlarut dalam air.</span></div>
-            <div><span className="water-metric-label"><Thermometer size={22} />Suhu air</span><strong>{value(reading?.temperature)} <small>°C</small></strong><span>Suhu yang dibaca oleh alat di dalam air.</span></div>
-          </div>
-          <p className="water-updated">{example ? 'Contoh data dari alat TDS02' : device.latestReading ? `Data terakhir diterima ${timeAgo(device.latestReading.createdAt)}` : 'Belum ada data dari alat'}</p>
-          {!example && measured && !device.online && <p className="alert info">Ini adalah angka terakhir yang tersimpan. Angka belum diperbarui karena alat tidak terhubung.</p>}
-          <details className="water-details">
-            <summary>Lihat angka tambahan <ChevronDown size={22} /></summary>
-            <div className="water-detail-grid">{DETAILS.map(({ key, label, unit, help, Icon }) => <div className="water-detail" key={key} title={help}><Icon size={22} /><div><span>{label}</span><strong>{value(reading?.[key], key === 'specificGravity' ? 3 : 2)} <small>{unit}</small></strong></div></div>)}</div>
-          </details>
-          <details className="water-details nutrient-help">
-            <summary>Periksa ketepatan alat pH <ChevronDown size={22} /></summary>
-            <p>Gunakan larutan pembanding pH 7 dan pH 4. Catat hasilnya agar mudah diperiksa bersama pendamping.</p>
-            <button className="btn" disabled={example} onClick={() => setCalibration({ kind: 'ph' })}><SlidersHorizontal size={20} />Catat pemeriksaan pH</button>
-          </details>
-        </section>
+        <details className="card water-module simple-sensor-details" hidden={view !== 'water'}>
+          <summary>Detail sensor & pemeriksaan pH</summary>
+          <p>Suhu air: {value(reading?.temperature)} °C</p>
+          <div className="water-detail-grid">{DETAILS.map(({ key, label, unit }) => <div className="water-detail" key={key}><span>{label}</span><strong>{value(reading?.[key])} <small>{unit}</small></strong></div>)}</div>
+          <button className="btn" disabled={example} onClick={() => setCalibration({ kind: 'ph' })}><SlidersHorizontal size={20} />Catat pemeriksaan pH</button>
+        </details>
 
         <section className="card dosing-module" aria-label="Empat pompa larutan" hidden={view !== 'pumps'}>
           <div className="nutrient-module-title"><span className="nutrient-module-icon"><FlaskConical size={26} /></span><h2>Empat pompa larutan</h2></div>
@@ -161,7 +136,7 @@ export default function NutrientPanel({ device, commands, relayStates = [], onSe
         </section>
       </div>
 
-      <details className="card nutrient-readiness">
+      <details className="card nutrient-readiness" hidden={view !== 'pumps'}>
         <summary>Persiapan pemeriksaan alat <ChevronDown size={22} /></summary>
         <p>Catatan pemeriksaan tersimpan di browser ini. Pengaturan alat belum berubah.</p>
         <div className="nutrient-checklist"><div><span className={measured && !example ? 'ready' : ''}>{measured && !example ? <Check size={20} /> : '1'}</span><p><b>Sambungkan alat</b><small>{measured && !example ? 'Angka dari alat sudah tersedia' : 'Menunggu angka dari alat'}</small></p></div><div><span className={drafts.ph ? 'ready' : ''}>{drafts.ph ? <Check size={20} /> : '2'}</span><p><b>Periksa angka pH</b><small>{drafts.ph ? 'Hasil pemeriksaan sudah dicatat' : 'Siapkan larutan pembanding pH 7 dan 4'}</small></p></div><div><span className={pumpCount === 4 ? 'ready' : ''}>{pumpCount === 4 ? <Check size={20} /> : '3'}</span><p><b>Ukur larutan yang keluar</b><small>{pumpCount} dari 4 pompa sudah dicatat</small></p></div></div>
