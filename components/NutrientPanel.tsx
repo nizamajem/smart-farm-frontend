@@ -129,10 +129,10 @@ export default function NutrientPanel({ device, commands, relayStates = [], onSe
               <div className="pump-heading"><span className="dosing-letter" aria-hidden="true">{letter}</span><div><h3>{displayName}</h3><p>{purpose}</p></div></div>
               <div className={`dosing-state ${!example && state?.state === 'on' ? 'pump-running' : ''}`}><span className="dot" />{status}</div>
               <details className="pump-measurement">
-                <summary>Kalibrasi durasi relay <ChevronDown size={20} /></summary>
+                <summary>Catatan uji volume (ml) <ChevronDown size={20} /></summary>
                 <p>{draft ? `Hasil catatan: ${value(Number(draft.volume) / Number(draft.seconds))} ml setiap detik.` : 'Belum ada catatan jumlah larutan yang keluar.'}</p>
                 <button className="btn" disabled={example} onClick={() => setCalibration({ kind: 'pump', index: i })}>{draft ? 'Lihat atau ubah catatan' : 'Catat hasil pengukuran'}</button>
-                {draft && <p className="dosing-caption">Catatan hanya tersimpan di browser ini. Belum mengubah kerja pompa.</p>}
+                {draft && <p className="dosing-caption">Catatan lokal. Tidak mengubah resep detik per liter di Campur Nutrisi.</p>}
                 {!example && command && <p>Perintah terakhir: {command.action === 'ON' ? 'nyalakan' : 'matikan'} — {{ pending: 'menunggu alat', sent: 'sedang dikirim', done: 'selesai', expired: 'tidak terkirim', failed: 'gagal' }[command.status]}.</p>}
               </details>
             </article>;
@@ -174,7 +174,7 @@ function CalibrationDialog({ calibration, drafts, onClose, onSave, error }: {
     const savedAt = new Date().toISOString();
     onSave(isPh ? { ...drafts, ph: { neutral, acid, savedAt } } : { ...drafts, pumps: { ...drafts.pumps, [index]: { seconds, volume, savedAt } } });
   }
-  if (!isPh) return <Modal title={`Kalibrasi relay ${DOSING_CHANNELS[index].name}`} onClose={onClose}>
+  if (!isPh) return <Modal title={`Catatan uji ${DOSING_CHANNELS[index].name}`} onClose={onClose}>
     <form className="simple-mix-form" onSubmit={e => { e.preventDefault(); if (valid) onSave({ ...drafts, pumps: { ...drafts.pumps, [index]: { seconds, volume, savedAt: new Date().toISOString() } } }); }}>
       <p>Isi hasil uji manual. Form ini tidak menyalakan relay.</p>
       <div className="simple-fields two">
@@ -182,9 +182,9 @@ function CalibrationDialog({ calibration, drafts, onClose, onSave, error }: {
         <label className="field">Larutan terkumpul (ml)<input type="number" min="0" step="any" required value={volume} onChange={e => setVolume(e.target.value)} placeholder="Contoh: 50" /></label>
       </div>
       <small>60 detik = 1 menit. Gunakan hasil ukur sendiri.</small>
-      <small>Kalibrasi tersimpan di browser ini.</small>
+      <small>Catatan uji tersimpan di browser ini, terpisah dari resep per liter.</small>
       {error && <p role="alert">{error}</p>}
-      <button className="btn primary simple-action" disabled={!valid}>Simpan Kalibrasi</button>
+      <button className="btn primary simple-action" disabled={!valid}>Simpan Catatan Uji</button>
     </form>
   </Modal>;
   return <Modal title={title} onClose={onClose}>

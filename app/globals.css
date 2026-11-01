@@ -1727,4 +1727,5 @@ pre.code {
 .smart-mcb-icon { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; background: var(--primary-soft); color: var(--primary); }
 .smart-mcb-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .smart-mcb-actions .btn { flex: 1; min-height: 48px; justify-content: center; }
+.simple-recipe { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 @media (max-width: 640px) { .simple-fields.three { grid-template-columns: 1fr; } .nutrient-panel .simple-flow { padding: 18px; } }
