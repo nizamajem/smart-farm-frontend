@@ -4,7 +4,9 @@ import { ArrowDown, ArrowRight, ArrowUp, Beaker, Check, ChevronDown, Droplets, F
 import { useEffect, useState } from 'react';
 import Modal from './Modal';
 import TankFlow from './TankFlow';
-import { MixPlanner, WaterGuide } from './NutrientGuide';
+import SmartMcbCard from './SmartMcbCard';
+import { WaterGuide } from './NutrientGuide';
+import MixPlanner from './MixPlanner';
 import { timeAgo } from '@/lib/format';
 import type { Device, HaRelayStatus, RelayCommand, SensorReading } from '@/lib/types';
 
@@ -95,6 +97,7 @@ export default function NutrientPanel({ device, commands, relayStates = [], onSe
       {!example && !measured && <div className="nutrient-connect"><div><b>Angka dari alat belum masuk</b><p>Minta pendamping memeriksa sambungan alat. Angka akan muncul setelah alat mengirim data.</p></div><button className="btn" onClick={onSettings}>Periksa sambungan <ArrowRight size={20} /></button></div>}
       {storageError && <div className="alert error" role="alert">{storageError}</div>}
 
+      <SmartMcbCard device={device} />
       <div className="garden-tabs" role="group" aria-label="Pilih kegiatan">
         <button className="btn" aria-pressed={view === 'water'} onClick={() => setView('water')}><Droplets size={20} /> Cek Air</button>
         <button className="btn" aria-pressed={view === 'mix'} onClick={() => setView('mix')}><FlaskConical size={20} /> Campur Nutrisi</button>
@@ -103,7 +106,7 @@ export default function NutrientPanel({ device, commands, relayStates = [], onSe
       </div>
       {view === 'water' && <WaterGuide key={String(example)} deviceId={device.id} example={example} reading={example ? { ...REFERENCE, createdAt: new Date().toISOString() } : reading} online={example || device.online} />}
       {view === 'flow' && <TankFlow />}
-      {view === 'mix' && <MixPlanner pumps={drafts.pumps} onCheckWater={() => setView('water')} onCalibration={index => setCalibration({ kind: 'pump', index })} />}
+      {view === 'mix' && <MixPlanner key={device.id} deviceId={device.id} onCheckWater={() => setView('water')} />}
       <div className="nutrient-layout" hidden={view === 'mix' || view === 'flow'}>
         <details className="card water-module simple-sensor-details" hidden={view !== 'water'}>
           <summary>Detail sensor & pemeriksaan pH</summary>

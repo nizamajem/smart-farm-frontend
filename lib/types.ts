@@ -41,6 +41,8 @@ export interface Device {
   relayLabels: string[];
   haEntities: HaEntityMap | null;
   haRelays?: HaRelayMap | null;
+  haMcbEntity?: string | null;
+  haMcbSensors?: { power?: string; energy?: string } | null;
   ownerId: number;
   lastSeenAt: string | null;
   createdAt: string;
@@ -70,6 +72,20 @@ export interface HaRelayStatus {
   friendlyName: string | null;
   updatedAt: string | null;
 }
+
+export interface HaMcbStatus {
+  power?: { value: number; updatedAt: string | null } | null;
+  energy?: { value: number; updatedAt: string | null } | null;
+  entityId: string | null;
+  state: 'on' | 'off' | 'unavailable' | 'unmapped';
+  friendlyName: string | null;
+  updatedAt: string | null;
+}
+
+export interface NutrientRecipe { liters: number; aSeconds: number; bSeconds: number }
+export interface MixPlan extends NutrientRecipe { calibrationKey: string; ready: boolean }
+export interface MixRun extends NutrientRecipe { requestId: string; status: 'running' | 'completed' | 'failed' | 'stopped'; startedAt: string; finishedAt?: string; error?: string }
+export interface NutrientStatus { recipe: NutrientRecipe | null; mix: MixRun | null }
 
 export interface HaHealth {
   status: 'ok' | 'error' | 'not_configured';

@@ -7,6 +7,8 @@ import type {
   HaEntityMap,
   HaRelayMap,
   HaRelayStatus,
+  HaMcbStatus,
+  NutrientRecipe, NutrientStatus, MixPlan,
   HaHealth,
   HaState,
   HaSyncResult,
@@ -98,6 +100,15 @@ function uploadRelease(
 }
 
 export const api = {
+  nutrientStatus: (id: number) => request<NutrientStatus>(`/devices/${id}/nutrients`),
+  saveNutrientRecipe: (id: number, recipe: NutrientRecipe) => request<NutrientStatus>(`/devices/${id}/nutrients/recipe`, { method: 'PUT', body: JSON.stringify(recipe) }),
+  nutrientPlan: (id: number, liters: number) => request<MixPlan>(`/devices/${id}/nutrients/plan`, { method: 'POST', body: JSON.stringify({ liters }) }),
+  startNutrientMix: (id: number, plan: MixPlan, requestId: string) => request<NutrientStatus>(`/devices/${id}/nutrients/mix`, { method: 'POST', body: JSON.stringify({ liters: plan.liters, calibrationKey: plan.calibrationKey, requestId, newWater: true }) }),
+  stopNutrientMix: (id: number) => request<NutrientStatus>(`/devices/${id}/nutrients/stop`, { method: 'POST' }),
+  setMcbSensors: (id: number, power: string, energy: string) => request<Device>(`/home-assistant/devices/${id}/mcb/sensors`, { method: 'PUT', body: JSON.stringify({ power, energy }) }),
+  haMcbStatus: (id: number) => request<HaMcbStatus>(`/home-assistant/devices/${id}/mcb`),
+  setHaMcb: (id: number, entityId: string) => request<Device>(`/home-assistant/devices/${id}/mcb`, { method: 'PUT', body: JSON.stringify({ entityId }) }),
+  commandHaMcb: (id: number, action: 'ON' | 'OFF') => request<HaMcbStatus>(`/home-assistant/devices/${id}/mcb/command`, { method: 'POST', body: JSON.stringify({ action }) }),
   login: (email: string, password: string) =>
     request<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   me: () => request<User>('/auth/me'),

@@ -1719,4 +1719,12 @@ pre.code {
 .simple-sensor-details { padding: 18px !important; }
 .simple-sensor-details .water-detail-grid { margin-block: 14px; }
 .simple-sensor-details .water-detail { flex-wrap: wrap; }
+.smart-mcb-card { display: grid; gap: 14px; padding: 20px; }
+.smart-mcb-heading { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.smart-mcb-heading h3 { margin: 0; font-size: 1.1rem; }
+.smart-mcb-heading .pill { margin-left: auto; }
+.smart-mcb-heading .muted, .smart-mcb-card > small { font-size: .85rem; }
+.smart-mcb-icon { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; background: var(--primary-soft); color: var(--primary); }
+.smart-mcb-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.smart-mcb-actions .btn { flex: 1; min-height: 48px; justify-content: center; }
 @media (max-width: 640px) { .simple-fields.three { grid-template-columns: 1fr; } .nutrient-panel .simple-flow { padding: 18px; } }
