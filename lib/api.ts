@@ -8,7 +8,7 @@ import type {
   HaRelayMap,
   HaRelayStatus,
   HaMcbStatus,
-  NutrientRecipe, NutrientStatus, MixPlan,
+  NutrientRecipe, NutrientStatus, MixPlan, PumpChannel, PumpCalibration,
   HaHealth,
   HaState,
   HaSyncResult,
@@ -101,6 +101,7 @@ function uploadRelease(
 
 export const api = {
   nutrientStatus: (id: number) => request<NutrientStatus>(`/devices/${id}/nutrients`),
+  saveDosingPump: (id: number, channel: PumpChannel, calibration: PumpCalibration) => request<NutrientStatus>(`/devices/${id}/nutrients/pumps/${channel}`, { method: 'PUT', body: JSON.stringify(calibration) }),
   saveNutrientRecipe: (id: number, recipe: NutrientRecipe) => request<NutrientStatus>(`/devices/${id}/nutrients/recipe`, { method: 'PUT', body: JSON.stringify(recipe) }),
   nutrientPlan: (id: number, liters: number) => request<MixPlan>(`/devices/${id}/nutrients/plan`, { method: 'POST', body: JSON.stringify({ liters }) }),
   startNutrientMix: (id: number, plan: MixPlan, requestId: string) => request<NutrientStatus>(`/devices/${id}/nutrients/mix`, { method: 'POST', body: JSON.stringify({ liters: plan.liters, calibrationKey: plan.calibrationKey, requestId, newWater: true }) }),

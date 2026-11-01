@@ -82,10 +82,12 @@ export interface HaMcbStatus {
   updatedAt: string | null;
 }
 
-export interface NutrientRecipe { liters: number; aSeconds: number; bSeconds: number }
-export interface MixPlan extends NutrientRecipe { calibrationKey: string; ready: boolean; issues?: string[]; minLiters?: number; maxLiters?: number }
-export interface MixRun extends NutrientRecipe { requestId: string; status: 'running' | 'completed' | 'failed' | 'stopped'; startedAt: string; finishedAt?: string; error?: string }
-export interface NutrientStatus { recipe: NutrientRecipe | null; mix: MixRun | null }
+export interface NutrientRecipe { waterLiters: number; aMl: number; bMl: number }
+export type PumpChannel = 'a' | 'b' | 'phUp' | 'phDown';
+export interface PumpCalibration { seconds: number; ml: number }
+export interface MixPlan { liters: number; aMl: number; bMl: number; aSeconds: number | null; bSeconds: number | null; calibrationKey: string; ready: boolean; issues?: string[]; minLiters?: number | null; maxLiters?: number | null }
+export interface MixRun { liters: number; aSeconds: number; bSeconds: number; aMl?: number; bMl?: number; requestId: string; status: 'running' | 'completed' | 'failed' | 'stopped'; startedAt: string; finishedAt?: string; error?: string }
+export interface NutrientStatus { recipe: NutrientRecipe | null; pumps: Partial<Record<PumpChannel, PumpCalibration>>; legacyRecipe?: boolean; mix: MixRun | null }
 
 export interface HaHealth {
   status: 'ok' | 'error' | 'not_configured';
