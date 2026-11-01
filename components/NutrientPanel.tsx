@@ -8,7 +8,9 @@ import SmartMcbCard from './SmartMcbCard';
 import { WaterGuide } from './NutrientGuide';
 import MixPlanner from './MixPlanner';
 import { timeAgo } from '@/lib/format';
-import type { Device, HaRelayStatus, RelayCommand, SensorReading } from '@/lib/types';
+import { api } from '@/lib/api';
+import { loadNutrients, PUMP_CHANNELS } from '@/lib/dosing-calibration';
+import type { Device, HaRelayStatus, RelayCommand, SensorReading, NutrientStatus } from '@/lib/types';
 
 export const DOSING_CHANNELS = [
   { name: 'Larutan A', displayName: 'Pompa larutan A', purpose: 'Menambahkan nutrisi A', letter: 'A', color: 'green', Icon: FlaskConical },
@@ -64,20 +66,48 @@ export default function NutrientPanel({ device, commands, relayStates = [], onSe
   const [calibration, setCalibration] = useState<Calibration | null>(null);
   const [drafts, setDrafts] = useState<Drafts>({ pumps: {} });
   const [storageError, setStorageError] = useState('');
+  const [pumpError, setPumpError] = useState('');
+  const [serverData, setServerData] = useState<NutrientStatus | null>(null);
+  const [savingCalibration, setSavingCalibration] = useState(false);
   const storageKey = `smartfarm:nutrient-drafts:v1:${device.ownerId}:${device.id}`;
   useEffect(() => {
     try { setDrafts(readDrafts(storageKey)); }
     catch { setDrafts({ pumps: {} }); setStorageError('Catatan di browser ini tidak dapat dibaca. Angka dari alat tetap bisa dilihat.'); }
   }, [storageKey]);
 
+  useEffect(() => {
+    let mounted = true;
+    const refresh = async () => {
+      try { const data = await loadNutrients(device.id, device.ownerId); if (mounted) { setServerData(data); setPumpError(''); } }
+      catch (e) { if (mounted) setPumpError(`Kalibrasi belum tersinkron. ${(e as Error).message}`); }
+    };
+    refresh(); const timer = setInterval(refresh, 5000);
+    return () => { mounted = false; clearInterval(timer); };
+  }, [device.id, device.ownerId]);
+  const effectiveDrafts: Drafts = { ...drafts, pumps: Object.fromEntries(PUMP_CHANNELS.flatMap((key, index) => {
+    const p = serverData?.pumps?.[key];
+    return p ? [[index, { seconds: String(p.seconds), volume: String(p.ml), savedAt: '' }]] : [];
+  })) };
   const reading = example ? REFERENCE : device.latestReading;
   const measured = [reading?.ph, reading?.conductivity, reading?.tds].some((n) => n != null);
-  const pumpCount = Object.keys(drafts.pumps).length;
+  const pumpCount = Object.keys(serverData?.pumps || {}).length;
 
-  function save(next: Drafts) {
+  async function save(next: Drafts) {
+    if (calibration?.kind === 'pump') {
+      const note = next.pumps[calibration.index];
+      if (!note) return;
+      setSavingCalibration(true); setStorageError('');
+      try {
+        setServerData(await api.saveDosingPump(device.id, PUMP_CHANNELS[calibration.index], { seconds: Number(note.seconds), ml: Number(note.volume) }));
+        setCalibration(null); setPumpError('');
+      } catch (e) { setStorageError((e as Error).message); }
+      finally { setSavingCalibration(false); }
+      return;
+    }
     try {
-      localStorage.setItem(storageKey, JSON.stringify(next));
-      setDrafts(next);
+      const localNext = { ...drafts, ph: next.ph };
+      localStorage.setItem(storageKey, JSON.stringify(localNext));
+      setDrafts(localNext);
       setStorageError('');
       setCalibration(null);
     } catch { setStorageError('Catatan belum tersimpan. Penyimpanan browser tidak tersedia; coba lagi setelah mengaktifkannya.'); }
@@ -95,6 +125,7 @@ export default function NutrientPanel({ device, commands, relayStates = [], onSe
 
       {example && <div className="alert info" role="status"><Info size={22} /><span><b>Anda sedang melihat contoh.</b> Angka ini bukan kondisi air saat ini.</span><button className="btn" onClick={() => setExample(false)}>Tutup contoh</button></div>}
       {!example && !measured && <div className="nutrient-connect"><div><b>Angka dari alat belum masuk</b><p>Minta pendamping memeriksa sambungan alat. Angka akan muncul setelah alat mengirim data.</p></div><button className="btn" onClick={onSettings}>Periksa sambungan <ArrowRight size={20} /></button></div>}
+      {pumpError && <div className="alert error" role="alert">{pumpError}</div>}
       {storageError && <div className="alert error" role="alert">{storageError}</div>}
 
       <SmartMcbCard device={device} />
@@ -106,7 +137,7 @@ export default function NutrientPanel({ device, commands, relayStates = [], onSe
       </div>
       {view === 'water' && <WaterGuide key={String(example)} deviceId={device.id} example={example} reading={example ? { ...REFERENCE, createdAt: new Date().toISOString() } : reading} online={example || device.online} />}
       {view === 'flow' && <TankFlow />}
-      {view === 'mix' && <MixPlanner key={device.id} deviceId={device.id} onCheckWater={() => setView('water')} />}
+      {view === 'mix' && <MixPlanner key={device.id} deviceId={device.id} ownerId={device.ownerId} onPumpsSaved={setServerData} onCheckWater={() => setView('water')} />}
       <div className="nutrient-layout" hidden={view === 'mix' || view === 'flow'}>
         <details className="card water-module simple-sensor-details" hidden={view !== 'water'}>
           <summary>Detail sensor & pemeriksaan pH</summary>
@@ -120,7 +151,7 @@ export default function NutrientPanel({ device, commands, relayStates = [], onSe
           <p className="dosing-description">Setiap pompa mengalirkan satu jenis larutan.</p>
           {DOSING_CHANNELS.some((c, i) => device.relayLabels[i] !== c.name) && <p className="dosing-note">Nama pompa belum dicocokkan dengan alat. Minta pendamping memeriksa Pengaturan alat sebelum menjalankan pompa.</p>}
           <div className="dosing-channels">{DOSING_CHANNELS.map(({ name, displayName, purpose, color, letter }, i) => {
-            const draft = drafts.pumps[i];
+            const draft = effectiveDrafts.pumps[i];
             const command = commands.find((c) => c.relay === i + 1);
             const entityId = device.haRelays?.[`relay${i + 1}` as keyof typeof device.haRelays];
             const state = relayStates.find((s) => s.relay === i + 1 && s.entityId === entityId);
@@ -129,10 +160,10 @@ export default function NutrientPanel({ device, commands, relayStates = [], onSe
               <div className="pump-heading"><span className="dosing-letter" aria-hidden="true">{letter}</span><div><h3>{displayName}</h3><p>{purpose}</p></div></div>
               <div className={`dosing-state ${!example && state?.state === 'on' ? 'pump-running' : ''}`}><span className="dot" />{status}</div>
               <details className="pump-measurement">
-                <summary>Catatan uji volume (ml) <ChevronDown size={20} /></summary>
-                <p>{draft ? `Hasil catatan: ${value(Number(draft.volume) / Number(draft.seconds))} ml setiap detik.` : 'Belum ada catatan jumlah larutan yang keluar.'}</p>
-                <button className="btn" disabled={example} onClick={() => setCalibration({ kind: 'pump', index: i })}>{draft ? 'Lihat atau ubah catatan' : 'Catat hasil pengukuran'}</button>
-                {draft && <p className="dosing-caption">Catatan lokal. Tidak mengubah resep detik per liter di Campur Nutrisi.</p>}
+                <summary>Kalibrasi pompa (ml) <ChevronDown size={20} /></summary>
+                <p>{draft ? `Hasil kalibrasi: ${value(Number(draft.volume) / Number(draft.seconds))} ml setiap detik.` : 'Belum ada catatan jumlah larutan yang keluar.'}</p>
+                <button className="btn" disabled={example} onClick={() => setCalibration({ kind: 'pump', index: i })}>{draft ? 'Ubah kalibrasi' : 'Kalibrasi pompa'}</button>
+                {draft && <p className="dosing-caption">Tersimpan di server dan dipakai untuk Campur Nutrisi.</p>}
                 {!example && command && <p>Perintah terakhir: {command.action === 'ON' ? 'nyalakan' : 'matikan'} — {{ pending: 'menunggu alat', sent: 'sedang dikirim', done: 'selesai', expired: 'tidak terkirim', failed: 'gagal' }[command.status]}.</p>}
               </details>
             </article>;
@@ -144,17 +175,17 @@ export default function NutrientPanel({ device, commands, relayStates = [], onSe
 
       <details className="card nutrient-readiness" hidden={view !== 'pumps'}>
         <summary>Persiapan pemeriksaan alat <ChevronDown size={22} /></summary>
-        <p>Catatan pemeriksaan tersimpan di browser ini. Pengaturan alat belum berubah.</p>
+        <p>Kalibrasi pompa tersimpan di server. Catatan pemeriksaan pH tersimpan di browser ini.</p>
         <div className="nutrient-checklist"><div><span className={measured && !example ? 'ready' : ''}>{measured && !example ? <Check size={20} /> : '1'}</span><p><b>Sambungkan alat</b><small>{measured && !example ? 'Angka dari alat sudah tersedia' : 'Menunggu angka dari alat'}</small></p></div><div><span className={drafts.ph ? 'ready' : ''}>{drafts.ph ? <Check size={20} /> : '2'}</span><p><b>Periksa angka pH</b><small>{drafts.ph ? 'Hasil pemeriksaan sudah dicatat' : 'Siapkan larutan pembanding pH 7 dan 4'}</small></p></div><div><span className={pumpCount === 4 ? 'ready' : ''}>{pumpCount === 4 ? <Check size={20} /> : '3'}</span><p><b>Ukur larutan yang keluar</b><small>{pumpCount} dari 4 pompa sudah dicatat</small></p></div></div>
       </details>
       <details className="nutrient-help-example"><summary>Ingin melihat contoh tampilan?</summary><p>Contoh hanya untuk mengenal tampilan. Angkanya tidak disimpan sebagai kondisi air.</p><button className="btn" onClick={() => setExample(!example)}><Beaker size={20} />{example ? 'Kembali ke angka alat' : 'Lihat contoh data'}</button></details>
-      {calibration && <CalibrationDialog key={calibration.kind === 'ph' ? 'ph' : calibration.index} calibration={calibration} drafts={drafts} onClose={() => { setCalibration(null); setStorageError(''); }} onSave={save} error={storageError} />}
+      {calibration && <CalibrationDialog key={calibration.kind === 'ph' ? 'ph' : calibration.index} calibration={calibration} drafts={effectiveDrafts} saving={savingCalibration} onClose={() => { setCalibration(null); setStorageError(''); }} onSave={save} error={storageError} />}
     </div>
   );
 }
 
-function CalibrationDialog({ calibration, drafts, onClose, onSave, error }: {
-  calibration: Calibration; drafts: Drafts; onClose: () => void; onSave: (next: Drafts) => void; error: string;
+function CalibrationDialog({ calibration, drafts, onClose, onSave, error, saving = false }: {
+  calibration: Calibration; drafts: Drafts; onClose: () => void; onSave: (next: Drafts) => void; error: string; saving?: boolean;
 }) {
   const isPh = calibration.kind === 'ph';
   const index = calibration.kind === 'pump' ? calibration.index : 0;
@@ -164,7 +195,7 @@ function CalibrationDialog({ calibration, drafts, onClose, onSave, error }: {
   const [neutral, setNeutral] = useState(drafts.ph?.neutral || '');
   const [acid, setAcid] = useState(drafts.ph?.acid || '');
   const [ready, setReady] = useState(false);
-  const valid = isPh ? neutral.trim() !== '' && acid.trim() !== '' && [neutral, acid].every((n) => Number.isFinite(Number(n)) && Number(n) >= 0 && Number(n) <= 14) : Number(seconds) >= 0.5 && Number.isFinite(Number(seconds)) && Number(volume) > 0 && Number.isFinite(Number(volume));
+  const valid = isPh ? neutral.trim() !== '' && acid.trim() !== '' && [neutral, acid].every((n) => Number.isFinite(Number(n)) && Number(n) >= 0 && Number(n) <= 14) : Number(seconds) >= 0.5 && Number(seconds) <= 60 && Number.isFinite(Number(seconds)) && Number(volume) >= .001 && Number(volume) <= 1000000 && Number.isFinite(Number(volume));
   const title = isPh ? 'Periksa ketepatan alat pH' : `Catat takaran · ${DOSING_CHANNELS[index].displayName}`;
   const steps = ['Siapkan alat', 'Isi hasil ukur', 'Periksa dan simpan'];
   function submit(e: React.FormEvent) {
@@ -174,17 +205,17 @@ function CalibrationDialog({ calibration, drafts, onClose, onSave, error }: {
     const savedAt = new Date().toISOString();
     onSave(isPh ? { ...drafts, ph: { neutral, acid, savedAt } } : { ...drafts, pumps: { ...drafts.pumps, [index]: { seconds, volume, savedAt } } });
   }
-  if (!isPh) return <Modal title={`Catatan uji ${DOSING_CHANNELS[index].name}`} onClose={onClose}>
+  if (!isPh) return <Modal title={`Kalibrasi pompa ${DOSING_CHANNELS[index].name}`} onClose={onClose}>
     <form className="simple-mix-form" onSubmit={e => { e.preventDefault(); if (valid) onSave({ ...drafts, pumps: { ...drafts.pumps, [index]: { seconds, volume, savedAt: new Date().toISOString() } } }); }}>
       <p>Isi hasil uji manual. Form ini tidak menyalakan relay.</p>
       <div className="simple-fields two">
-        <label className="field">Lama menyala (detik)<input type="number" min="0.5" step="any" required value={seconds} onChange={e => setSeconds(e.target.value)} placeholder="Contoh: 60" /></label>
-        <label className="field">Larutan terkumpul (ml)<input type="number" min="0" step="any" required value={volume} onChange={e => setVolume(e.target.value)} placeholder="Contoh: 50" /></label>
+        <label className="field">Lama menyala (detik)<input type="number" min="0.5" max="60" step="any" required value={seconds} onChange={e => setSeconds(e.target.value)} placeholder="Contoh: 60" /></label>
+        <label className="field">Larutan terkumpul (ml)<input type="number" min="0.001" max="1000000" step="any" required value={volume} onChange={e => setVolume(e.target.value)} placeholder="Contoh: 50" /></label>
       </div>
       <small>60 detik = 1 menit. Gunakan hasil ukur sendiri.</small>
-      <small>Catatan uji tersimpan di browser ini, terpisah dari resep per liter.</small>
+      <small>Kalibrasi tersimpan di server dan dipakai di semua tampilan.</small>
       {error && <p role="alert">{error}</p>}
-      <button className="btn primary simple-action" disabled={!valid}>Simpan Catatan Uji</button>
+      <button className="btn primary simple-action" disabled={!valid || saving}>{saving ? 'Menyimpan...' : 'Simpan Kalibrasi'}</button>
     </form>
   </Modal>;
   return <Modal title={title} onClose={onClose}>
@@ -203,7 +234,7 @@ function CalibrationDialog({ calibration, drafts, onClose, onSave, error }: {
           <label className="field">Angka alat pada larutan pH 7,00<input type="number" min="0" max="14" step="any" required value={neutral} onChange={(e) => setNeutral(e.target.value)} placeholder="Contoh: 6,85" autoFocus /><span className="hint">Tulis angka yang tampil pada alat</span></label>
           <label className="field">Angka alat pada larutan pH 4,00<input type="number" min="0" max="14" step="any" required value={acid} onChange={(e) => setAcid(e.target.value)} placeholder="Contoh: 4,12" /><span className="hint">Tulis angka yang tampil pada alat</span></label>
         </> : <>
-          <label className="field">Lama pompa berjalan (detik)<input type="number" min="0.5" step="any" required value={seconds} onChange={(e) => setSeconds(e.target.value)} autoFocus /><span className="hint">Contoh: 60 detik = 1 menit</span></label>
+          <label className="field">Lama pompa berjalan (detik)<input type="number" min="0.5" max="60" step="any" required value={seconds} onChange={(e) => setSeconds(e.target.value)} autoFocus /><span className="hint">Contoh: 60 detik = 1 menit</span></label>
           <label className="field">Larutan yang terkumpul (ml)<input type="number" min="0.001" step="any" required value={volume} onChange={(e) => setVolume(e.target.value)} placeholder="Contoh: 12" /><span className="hint">Baca angka pada gelas ukur setelah uji</span></label>
         </>}</div>
       </>}

@@ -2,11 +2,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Calculator, FlaskConical, Play, Square } from 'lucide-react';
 import { api } from '@/lib/api';
+import { loadNutrients } from '@/lib/dosing-calibration';
 import type { MixPlan, NutrientStatus, PumpChannel } from '@/lib/types';
 const fmt = (n: number | null) => n == null ? '\u2014' : n.toLocaleString('id-ID', { maximumFractionDigits: 3 });
 const labels = { running: 'Sedang mencampur', completed: 'Campuran selesai', stopped: 'Campuran dihentikan', failed: 'Campuran gagal' };
 
-export default function MixPlanner({ deviceId, onCheckWater }: { deviceId: number; onCheckWater: () => void }) {
+export default function MixPlanner({ deviceId, ownerId, onCheckWater, onPumpsSaved }: { deviceId: number; ownerId: number; onCheckWater: () => void; onPumpsSaved?: (data: NutrientStatus) => void }) {
   const [data, setData] = useState<NutrientStatus | null>(null);
   const [liters, setLiters] = useState('');
   const [newWater, setNewWater] = useState(false);
@@ -25,7 +26,7 @@ export default function MixPlanner({ deviceId, onCheckWater }: { deviceId: numbe
   async function savePump(e: React.FormEvent) {
     e.preventDefault(); if (!pumpEditing) return;
     setBusy(true); setError('');
-    try { setData(await api.saveDosingPump(deviceId, pumpEditing, { seconds: Number(pumpSeconds), ml: Number(pumpMl) })); setPumpEditing(null); setPlan(null); setRequestId(''); }
+    try { const next = await api.saveDosingPump(deviceId, pumpEditing, { seconds: Number(pumpSeconds), ml: Number(pumpMl) }); setData(next); onPumpsSaved?.(next); setPumpEditing(null); setPlan(null); setRequestId(''); }
     catch (e) { setError((e as Error).message); }
     finally { setBusy(false); }
   }
@@ -36,12 +37,12 @@ export default function MixPlanner({ deviceId, onCheckWater }: { deviceId: numbe
   useEffect(() => {
     let mounted = true;
     const load = async () => {
-      try { const d = await api.nutrientStatus(deviceId); if (mounted) { setData(d); setConnectionError(''); } }
-      catch { if (mounted) setConnectionError('Status belum tersedia. Periksa koneksi.'); }
+      try { const d = await loadNutrients(deviceId, ownerId); if (mounted) { setData(d); setConnectionError(''); } }
+      catch (e) { if (mounted) setConnectionError(`Kalibrasi belum tersinkron. ${(e as Error).message}`); }
     };
     load(); const timer = setInterval(load, 1500);
     return () => { mounted = false; clearInterval(timer); };
-  }, [deviceId]);
+  }, [deviceId, ownerId]);
   async function saveRecipe(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setError('');
     try { setData(await api.saveNutrientRecipe(deviceId, { waterLiters: Number(referenceLiters), aMl: Number(a), bMl: Number(b) })); setEditing(false); setPlan(null); }
