@@ -24,8 +24,10 @@ export default function HomeAssistantCard({ device, onSaved }: { device: Device;
   const toast = useToast();
   const [health, setHealth] = useState<HaHealth | null>(null);
   const [entities, setEntities] = useState<HaState[]>([]);
-  const [map, setMap] = useState<HaEntityMap>(device.haEntities ?? {});
+  const [map, setMap] = useState<HaEntityMap>({});
+  const [saved, setSaved] = useState<HaEntityMap>(device.haEntities ?? {});
   const [busy, setBusy] = useState(false);
+  useEffect(() => { setSaved(device.haEntities ?? {}); }, [device.haEntities]);
 
   useEffect(() => {
     api
@@ -51,8 +53,9 @@ export default function HomeAssistantCard({ device, onSaved }: { device: Device;
 
   const save = () =>
     run(async () => {
-      const payload = Object.fromEntries(METRICS.map((m) => [m.key, map[m.key] ?? ''])) as HaEntityMap;
-      await api.setHaEntities(device.id, payload);
+      const next = await api.setHaEntities(device.id, map);
+      setSaved(next.haEntities ?? {});
+      setMap({});
       return 'Pemetaan Home Assistant disimpan';
     });
 
@@ -94,7 +97,8 @@ export default function HomeAssistantCard({ device, onSaved }: { device: Device;
         <>
           <div className="form-grid">
             {METRICS.map((m) => {
-              const s = entity(map[m.key]);
+              const value = map[m.key] ?? saved[m.key] ?? '';
+              const s = entity(value);
               const unavailable = s && (s.state === 'unavailable' || s.state === 'unknown');
               return (
                 <label key={m.key} className="field">
@@ -102,7 +106,7 @@ export default function HomeAssistantCard({ device, onSaved }: { device: Device;
                   <input
                     list="ha-sensors"
                     placeholder="Ketik untuk mencari sensor…"
-                    value={map[m.key] ?? ''}
+                    value={value}
                     onChange={(e) => setMap({ ...map, [m.key]: e.target.value.trim() })}
                   />
                   {s && (
@@ -123,7 +127,7 @@ export default function HomeAssistantCard({ device, onSaved }: { device: Device;
           </datalist>
 
           <div className="actions-row">
-            <button className="btn primary" onClick={save} disabled={busy}>
+            <button className="btn primary" onClick={save} disabled={busy || !Object.keys(map).length}>
               Simpan pemetaan
             </button>
             <button className="btn" onClick={sync} disabled={busy}>

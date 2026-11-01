@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Calculator, FlaskConical, Play, Square } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { MixPlan, NutrientStatus } from '@/lib/types';
@@ -19,6 +19,9 @@ export default function MixPlanner({ deviceId, onCheckWater }: { deviceId: numbe
   const [error, setError] = useState('');
   const [connectionError, setConnectionError] = useState('');
   const [editing, setEditing] = useState(false);
+  const errorBox = useRef<HTMLDivElement>(null);
+  const runError = data?.mix?.status === 'failed' ? data.mix.error : '';
+  useEffect(() => { if (error || connectionError || runError) errorBox.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, [error, connectionError, runError]);
   const running = data?.mix?.status === 'running';
   useEffect(() => {
     let mounted = true;
@@ -41,8 +44,9 @@ export default function MixPlanner({ deviceId, onCheckWater }: { deviceId: numbe
       const next = start && plan ? plan : await api.nutrientPlan(deviceId, Number(liters));
       setPlan(next);
       const key = start && requestId ? requestId : crypto.randomUUID(); setRequestId(key);
+      if (start && !next.ready) { setError(next.issues?.join(' ') || 'Relay A dan B belum siap. Periksa pemetaan dan durasi.'); return; }
       if (start) setData(await api.startNutrientMix(deviceId, next, key));
-    } catch (e) { setError((e as Error).message); }
+    } catch (e) { setPlan(null); setError((e as Error).message || 'Permintaan gagal. Coba lagi.'); }
     finally { setBusy(false); }
   }
   async function stop() {
@@ -51,7 +55,7 @@ export default function MixPlanner({ deviceId, onCheckWater }: { deviceId: numbe
     catch (e) { setError((e as Error).message); }
     finally { setBusy(false); }
   }
-  const valid = Number(liters) > 0 && Number.isFinite(Number(liters)) && !!data?.recipe && !connectionError;
+  const valid = Number(liters) >= .01 && Number(liters) <= 1000000 && Number.isFinite(Number(liters)) && !!data?.recipe && !connectionError;
   const used = !!requestId && data?.mix?.requestId === requestId;
   const recipe = data?.recipe;
   return <section className="card garden-mix simple-flow" aria-label="Campur nutrisi">
@@ -61,11 +65,11 @@ export default function MixPlanner({ deviceId, onCheckWater }: { deviceId: numbe
     <label className="field">Air di tandon (liter)<input type="number" min="0.01" step="any" placeholder="Contoh: 10" value={liters} disabled={busy || running} onChange={e => { setLiters(e.target.value); setPlan(null); setRequestId(''); }} /></label>
     <label className="simple-checkbox"><input type="checkbox" checked={newWater} disabled={busy || running} onChange={e => setNewWater(e.target.checked)} /><span>Air belum diberi AB mix</span></label>
     {plan && <div className="garden-status-grid" aria-live="polite"><article className="garden-status"><span>Relay A</span><strong>{fmt(plan.aSeconds)} <small>detik</small></strong></article><article className="garden-status"><span>Relay B</span><strong>{fmt(plan.bSeconds)} <small>detik</small></strong></article></div>}
-    <div className="smart-mcb-actions"><button className="btn" disabled={busy || running || !valid} onClick={() => calculate(false)}><Calculator size={20} />Hitung Takaran</button><button className="btn primary" disabled={busy || running || !valid || !newWater || used} onClick={() => calculate(true)}><Play size={20} />Campur Nutrisi</button></div>
+    {(error || connectionError || runError) && <div className="alert error" role="alert" ref={errorBox} tabIndex={-1}><b>Belum bisa diproses.</b> {error || connectionError || runError}</div>}
+    {plan?.issues?.map(issue => <div className="alert info" key={issue}>{issue}</div>)}
+    <div className="smart-mcb-actions"><button className="btn" disabled={busy || running || !valid} onClick={() => calculate(false)}><Calculator size={20} />{busy ? 'Memproses…' : 'Hitung Takaran'}</button><button className="btn primary" disabled={busy || running || !valid || !newWater || used || (!!plan && !plan.ready)} onClick={() => calculate(true)}><Play size={20} />Campur Nutrisi</button></div>
     {(running || connectionError) && <button className="btn simple-action" onClick={stop} disabled={busy}><Square size={18} />Hentikan Campuran</button>}
     {data?.mix && <div role="status"><b>{labels[data.mix.status]}</b><p>{fmt(data.mix.liters)} liter · A {fmt(data.mix.aSeconds)} detik · B {fmt(data.mix.bSeconds)} detik</p>{data.mix.error && <p>{data.mix.error}</p>}</div>}
-    {(error || connectionError) && <p role="alert">{error || connectionError}</p>}
-    {plan && !plan.ready && <small>Hubungkan relay A dan B di Pengaturan alat.</small>}
     {data?.mix?.status === 'completed' && <button className="btn" onClick={onCheckWater}>Lanjut Cek Air</button>}
     <details className="simple-help"><summary>Cara kerja</summary><p>Contoh: kalibrasi 4 detik per 10 liter → 20 liter memakai 8 detik. A menyala lalu mati, dilanjutkan B. Maksimal 60 detik tiap relay. Pastikan sirkulasi air aktif. Setelah tercampur, cek TDS dan pH.</p></details>
   </section>;

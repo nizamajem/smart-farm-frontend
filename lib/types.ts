@@ -83,7 +83,7 @@ export interface HaMcbStatus {
 }
 
 export interface NutrientRecipe { liters: number; aSeconds: number; bSeconds: number }
-export interface MixPlan extends NutrientRecipe { calibrationKey: string; ready: boolean }
+export interface MixPlan extends NutrientRecipe { calibrationKey: string; ready: boolean; issues?: string[]; minLiters?: number; maxLiters?: number }
 export interface MixRun extends NutrientRecipe { requestId: string; status: 'running' | 'completed' | 'failed' | 'stopped'; startedAt: string; finishedAt?: string; error?: string }
 export interface NutrientStatus { recipe: NutrientRecipe | null; mix: MixRun | null }
 
