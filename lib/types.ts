@@ -87,7 +87,9 @@ export type PumpChannel = 'a' | 'b' | 'phUp' | 'phDown';
 export interface PumpCalibration { seconds: number; ml: number }
 export interface MixPlan { liters: number; aMl: number; bMl: number; aSeconds: number | null; bSeconds: number | null; calibrationKey: string; ready: boolean; issues?: string[]; minLiters?: number | null; maxLiters?: number | null }
 export interface MixRun { liters: number; aSeconds: number; bSeconds: number; aMl?: number; bMl?: number; requestId: string; status: 'running' | 'completed' | 'failed' | 'stopped'; startedAt: string; finishedAt?: string; error?: string }
-export interface NutrientStatus { recipe: NutrientRecipe | null; pumps: Partial<Record<PumpChannel, PumpCalibration>>; legacyRecipe?: boolean; mix: MixRun | null }
+export interface PhPlan { channel: 'phUp' | 'phDown'; ml: number; seconds: number | null; calibrationKey: string; ready: boolean; issues: string[] }
+export interface PhDoseRun { requestId: string; channel: 'phUp' | 'phDown'; ml: number; seconds: number; status: 'running' | 'completed' | 'failed' | 'stopped'; startedAt: string; finishedAt?: string; error?: string }
+export interface NutrientStatus { recipe: NutrientRecipe | null; pumps: Partial<Record<PumpChannel, PumpCalibration>>; legacyRecipe?: boolean; mix: MixRun | null; phDose?: PhDoseRun | null }
 
 export interface HaHealth {
   status: 'ok' | 'error' | 'not_configured';

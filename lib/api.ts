@@ -8,7 +8,7 @@ import type {
   HaRelayMap,
   HaRelayStatus,
   HaMcbStatus,
-  NutrientRecipe, NutrientStatus, MixPlan, PumpChannel, PumpCalibration,
+  NutrientRecipe, NutrientStatus, MixPlan, PumpChannel, PumpCalibration, PhPlan,
   HaHealth,
   HaState,
   HaSyncResult,
@@ -101,6 +101,9 @@ function uploadRelease(
 
 export const api = {
   nutrientStatus: (id: number) => request<NutrientStatus>(`/devices/${id}/nutrients`),
+  phDosePlan: (id: number, channel: 'phUp' | 'phDown', ml: number) => request<PhPlan>(`/devices/${id}/nutrients/ph/plan`, { method: 'POST', body: JSON.stringify({ channel, ml }) }),
+  startPhDose: (id: number, plan: PhPlan, requestId: string) => request<NutrientStatus>(`/devices/${id}/nutrients/ph/dose`, { method: 'POST', body: JSON.stringify({ channel: plan.channel, ml: plan.ml, calibrationKey: plan.calibrationKey, requestId }) }),
+  stopPhDose: (id: number) => request<NutrientStatus>(`/devices/${id}/nutrients/ph/stop`, { method: 'POST' }),
   saveDosingPump: (id: number, channel: PumpChannel, calibration: PumpCalibration) => request<NutrientStatus>(`/devices/${id}/nutrients/pumps/${channel}`, { method: 'PUT', body: JSON.stringify(calibration) }),
   importDosingPump: (id: number, channel: PumpChannel, calibration: PumpCalibration) => request<NutrientStatus>(`/devices/${id}/nutrients/pumps/${channel}/import`, { method: 'POST', body: JSON.stringify(calibration) }),
   saveNutrientRecipe: (id: number, recipe: NutrientRecipe) => request<NutrientStatus>(`/devices/${id}/nutrients/recipe`, { method: 'PUT', body: JSON.stringify(recipe) }),

@@ -14,13 +14,13 @@ export function loadNutrients(deviceId: number, ownerId: number): Promise<Nutrie
     let notes: { pumps?: Record<number, { seconds?: string; volume?: string }> };
     try { notes = JSON.parse(localStorage.getItem(key) || '{}'); }
     catch { return status; }
-    if (status.mix?.status === 'running') return status;
+    if (status.mix?.status === 'running' || status.phDose?.status === 'running') return status;
     for (const [index, channel] of PUMP_CHANNELS.entries()) {
       if (status.pumps?.[channel]) continue;
       const note = notes?.pumps?.[index];
       if (!note) continue;
       const seconds = Number(note.seconds), ml = Number(note.volume);
-      if (!Number.isFinite(seconds) || seconds < .5 || seconds > 60 || !Number.isFinite(ml) || ml < .001 || ml > 1000000) continue;
+      if (!Number.isFinite(seconds) || seconds < .5 || seconds > 86400 || !Number.isFinite(ml) || ml < .001 || ml > 1000000) continue;
       status = await api.importDosingPump(deviceId, channel, { seconds, ml });
     }
     return status;

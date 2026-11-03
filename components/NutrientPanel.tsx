@@ -7,6 +7,7 @@ import TankFlow from './TankFlow';
 import SmartMcbCard from './SmartMcbCard';
 import { WaterGuide } from './NutrientGuide';
 import MixPlanner from './MixPlanner';
+import PhDoser from './PhDoser';
 import { timeAgo } from '@/lib/format';
 import { api } from '@/lib/api';
 import { loadNutrients, PUMP_CHANNELS } from '@/lib/dosing-calibration';
@@ -62,7 +63,7 @@ export default function NutrientPanel({ device, commands, relayStates = [], onSe
   device: Device; commands: RelayCommand[]; relayStates?: HaRelayStatus[]; onSettings: () => void; onControl: () => void;
 }) {
   const [example, setExample] = useState(false);
-  const [view, setView] = useState<'water' | 'mix' | 'pumps' | 'flow'>('water');
+  const [view, setView] = useState<'water' | 'ph' | 'mix' | 'pumps' | 'flow'>('water');
   const [calibration, setCalibration] = useState<Calibration | null>(null);
   const [drafts, setDrafts] = useState<Drafts>({ pumps: {} });
   const [storageError, setStorageError] = useState('');
@@ -131,14 +132,16 @@ export default function NutrientPanel({ device, commands, relayStates = [], onSe
       <SmartMcbCard device={device} />
       <div className="garden-tabs" role="group" aria-label="Pilih kegiatan">
         <button className="btn" aria-pressed={view === 'water'} onClick={() => setView('water')}><Droplets size={20} /> Cek Air</button>
+        <button className="btn" aria-pressed={view === 'ph'} onClick={() => setView('ph')}><SlidersHorizontal size={20} /> Atur pH</button>
         <button className="btn" aria-pressed={view === 'mix'} onClick={() => setView('mix')}><FlaskConical size={20} /> Campur Nutrisi</button>
         <button className="btn" aria-pressed={view === 'pumps'} onClick={() => setView('pumps')}><Settings size={20} /> Pompa</button>
         <button className="btn" aria-pressed={view === 'flow'} onClick={() => setView('flow')}><Waves size={20} /> Aliran Air</button>
       </div>
       {view === 'water' && <WaterGuide key={String(example)} deviceId={device.id} example={example} reading={example ? { ...REFERENCE, createdAt: new Date().toISOString() } : reading} online={example || device.online} />}
+      {view === 'ph' && <PhDoser key={device.id} deviceId={device.id} onCheckWater={() => setView('water')} />}
       {view === 'flow' && <TankFlow />}
       {view === 'mix' && <MixPlanner key={device.id} deviceId={device.id} ownerId={device.ownerId} onPumpsSaved={setServerData} onCheckWater={() => setView('water')} />}
-      <div className="nutrient-layout" hidden={view === 'mix' || view === 'flow'}>
+      <div className="nutrient-layout" hidden={view === 'ph' || view === 'mix' || view === 'flow'}>
         <details className="card water-module simple-sensor-details" hidden={view !== 'water'}>
           <summary>Detail sensor & pemeriksaan pH</summary>
           <p>Suhu air: {value(reading?.temperature)} °C</p>
@@ -195,7 +198,7 @@ function CalibrationDialog({ calibration, drafts, onClose, onSave, error, saving
   const [neutral, setNeutral] = useState(drafts.ph?.neutral || '');
   const [acid, setAcid] = useState(drafts.ph?.acid || '');
   const [ready, setReady] = useState(false);
-  const valid = isPh ? neutral.trim() !== '' && acid.trim() !== '' && [neutral, acid].every((n) => Number.isFinite(Number(n)) && Number(n) >= 0 && Number(n) <= 14) : Number(seconds) >= 0.5 && Number(seconds) <= 60 && Number.isFinite(Number(seconds)) && Number(volume) >= .001 && Number(volume) <= 1000000 && Number.isFinite(Number(volume));
+  const valid = isPh ? neutral.trim() !== '' && acid.trim() !== '' && [neutral, acid].every((n) => Number.isFinite(Number(n)) && Number(n) >= 0 && Number(n) <= 14) : Number(seconds) >= 0.5 && Number(seconds) <= 86400 && Number.isFinite(Number(seconds)) && Number(volume) >= .001 && Number(volume) <= 1000000 && Number.isFinite(Number(volume));
   const title = isPh ? 'Periksa ketepatan alat pH' : `Catat takaran · ${DOSING_CHANNELS[index].displayName}`;
   const steps = ['Siapkan alat', 'Isi hasil ukur', 'Periksa dan simpan'];
   function submit(e: React.FormEvent) {
@@ -209,7 +212,7 @@ function CalibrationDialog({ calibration, drafts, onClose, onSave, error, saving
     <form className="simple-mix-form" onSubmit={e => { e.preventDefault(); if (valid) onSave({ ...drafts, pumps: { ...drafts.pumps, [index]: { seconds, volume, savedAt: new Date().toISOString() } } }); }}>
       <p>Isi hasil uji manual. Form ini tidak menyalakan relay.</p>
       <div className="simple-fields two">
-        <label className="field">Lama menyala (detik)<input type="number" min="0.5" max="60" step="any" required value={seconds} onChange={e => setSeconds(e.target.value)} placeholder="Contoh: 60" /></label>
+        <label className="field">Lama menyala (detik)<input type="number" min="0.5" max="86400" step="any" required value={seconds} onChange={e => setSeconds(e.target.value)} placeholder="Contoh: 60" /></label>
         <label className="field">Larutan terkumpul (ml)<input type="number" min="0.001" max="1000000" step="any" required value={volume} onChange={e => setVolume(e.target.value)} placeholder="Contoh: 50" /></label>
       </div>
       <small>60 detik = 1 menit. Gunakan hasil ukur sendiri.</small>
@@ -234,7 +237,7 @@ function CalibrationDialog({ calibration, drafts, onClose, onSave, error, saving
           <label className="field">Angka alat pada larutan pH 7,00<input type="number" min="0" max="14" step="any" required value={neutral} onChange={(e) => setNeutral(e.target.value)} placeholder="Contoh: 6,85" autoFocus /><span className="hint">Tulis angka yang tampil pada alat</span></label>
           <label className="field">Angka alat pada larutan pH 4,00<input type="number" min="0" max="14" step="any" required value={acid} onChange={(e) => setAcid(e.target.value)} placeholder="Contoh: 4,12" /><span className="hint">Tulis angka yang tampil pada alat</span></label>
         </> : <>
-          <label className="field">Lama pompa berjalan (detik)<input type="number" min="0.5" max="60" step="any" required value={seconds} onChange={(e) => setSeconds(e.target.value)} autoFocus /><span className="hint">Contoh: 60 detik = 1 menit</span></label>
+          <label className="field">Lama pompa berjalan (detik)<input type="number" min="0.5" max="86400" step="any" required value={seconds} onChange={(e) => setSeconds(e.target.value)} autoFocus /><span className="hint">Contoh: 60 detik = 1 menit</span></label>
           <label className="field">Larutan yang terkumpul (ml)<input type="number" min="0.001" step="any" required value={volume} onChange={(e) => setVolume(e.target.value)} placeholder="Contoh: 12" /><span className="hint">Baca angka pada gelas ukur setelah uji</span></label>
         </>}</div>
       </>}

@@ -33,7 +33,7 @@ export default function MixPlanner({ deviceId, ownerId, onCheckWater, onPumpsSav
   const errorBox = useRef<HTMLDivElement>(null);
   const runError = data?.mix?.status === 'failed' ? data.mix.error : '';
   useEffect(() => { if (error || connectionError || runError) errorBox.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, [error, connectionError, runError]);
-  const running = data?.mix?.status === 'running';
+  const running = data?.mix?.status === 'running' || data?.phDose?.status === 'running';
   useEffect(() => {
     let mounted = true;
     const load = async () => {
@@ -62,7 +62,7 @@ export default function MixPlanner({ deviceId, ownerId, onCheckWater, onPumpsSav
   }
   async function stop() {
     setBusy(true); setError('');
-    try { setData(await api.stopNutrientMix(deviceId)); }
+    try { setData(data?.phDose?.status === 'running' ? await api.stopPhDose(deviceId) : await api.stopNutrientMix(deviceId)); }
     catch (e) { setError((e as Error).message); }
     finally { setBusy(false); }
   }
@@ -75,7 +75,7 @@ export default function MixPlanner({ deviceId, ownerId, onCheckWater, onPumpsSav
     {data?.legacyRecipe && <div className="alert info">Pengaturan lama memakai detik per liter. Isi ulang resep dalam ml; data lama tetap disimpan.</div>}
     {editing && <form className="simple-mix-form" onSubmit={saveRecipe}><div className="simple-fields three"><label className="field">Air tandon utama (liter)<input type="number" min="0.01" max="1000000" step="any" required value={referenceLiters} onChange={e => setReferenceLiters(e.target.value)} placeholder="Contoh: 1000" /></label><label className="field">Larutan A (ml)<input type="number" min="0.001" max="1000000" step="any" required value={a} onChange={e => setA(e.target.value)} placeholder="Sesuai resep produk" /></label><label className="field">Larutan B (ml)<input type="number" min="0.001" max="1000000" step="any" required value={b} onChange={e => setB(e.target.value)} placeholder="Sesuai resep produk" /></label></div><small>Takaran mengikuti produk dan tanaman. Menyimpan resep tidak menyalakan pompa.</small><button className="btn" disabled={busy || running}>Simpan Resep</button></form>}
     <details className="simple-help"><summary>4 wadah larutan & kalibrasi pompa</summary><div className="garden-status-grid">{([['a', 'Larutan A'], ['b', 'Larutan B'], ['phUp', 'pH Up'], ['phDown', 'pH Down']] as const).map(([channel, label]) => { const pump = data?.pumps?.[channel]; return <article className="garden-status" key={channel}><b>{label}</b><small>{pump ? `${fmt(pump.seconds)} detik menghasilkan ${fmt(pump.ml)} ml` : 'Belum dikalibrasi'}</small><button className="btn" disabled={busy || running} onClick={() => { setPumpEditing(channel); setPumpSeconds(pump ? String(pump.seconds) : ''); setPumpMl(pump ? String(pump.ml) : ''); }}>Kalibrasi {label}</button></article>; })}</div></details>
-    {pumpEditing && <form className="simple-mix-form" onSubmit={savePump}><h3>Kalibrasi pompa {({ a: 'A', b: 'B', phUp: 'pH Up', phDown: 'pH Down' })[pumpEditing]}</h3><div className="simple-fields two"><label className="field">Lama relay menyala (detik)<input type="number" min="0.5" max="60" step="any" required value={pumpSeconds} onChange={e => setPumpSeconds(e.target.value)} /></label><label className="field">Larutan tertampung (ml)<input type="number" min="0.001" max="1000000" step="any" required value={pumpMl} onChange={e => setPumpMl(e.target.value)} /></label></div><small>Isi hasil gelas ukur. Ini volume larutan, bukan liter air tandon utama.</small><button className="btn" disabled={busy || running}>Simpan Kalibrasi Pompa</button></form>}
+    {pumpEditing && <form className="simple-mix-form" onSubmit={savePump}><h3>Kalibrasi pompa {({ a: 'A', b: 'B', phUp: 'pH Up', phDown: 'pH Down' })[pumpEditing]}</h3><div className="simple-fields two"><label className="field">Lama relay menyala (detik)<input type="number" min="0.5" max="86400" step="any" required value={pumpSeconds} onChange={e => setPumpSeconds(e.target.value)} /></label><label className="field">Larutan tertampung (ml)<input type="number" min="0.001" max="1000000" step="any" required value={pumpMl} onChange={e => setPumpMl(e.target.value)} /></label></div><small>Isi hasil gelas ukur. Ini volume larutan, bukan liter air tandon utama.</small><button className="btn" disabled={busy || running}>Simpan Kalibrasi Pompa</button></form>}
     <label className="field">Air tandon utama sekarang (liter)<input type="number" min="0.01" step="any" placeholder="Contoh: 10" value={liters} disabled={busy || running} onChange={e => { setLiters(e.target.value); setPlan(null); setRequestId(''); }} /></label>
     <label className="simple-checkbox"><input type="checkbox" checked={newWater} disabled={busy || running} onChange={e => setNewWater(e.target.checked)} /><span>Air belum diberi AB mix</span></label>
     {plan && <div className="garden-status-grid" aria-live="polite"><article className="garden-status"><span>Larutan A</span><strong>{fmt(plan.aMl)} <small>ml</small></strong><small>Relay {fmt(plan.aSeconds)} detik</small></article><article className="garden-status"><span>Larutan B</span><strong>{fmt(plan.bMl)} <small>ml</small></strong><small>Relay {fmt(plan.bSeconds)} detik</small></article></div>}
