@@ -1,26 +1,32 @@
 'use client';
 
-import { ChevronRight, Clock, Cpu, Plus, Sprout, Thermometer, Wifi } from 'lucide-react';
+import { ChevronRight, Plus, Sprout } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
-import { MetricGrid, WaterMetricGrid } from '@/components/Metric';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useCallback, useEffect, useState } from 'react';
+import PanelMetrics from '@/components/PanelMetrics';
+import Mascot from '@/components/Mascot';
 import { DOSING_CHANNELS } from '@/components/NutrientPanel';
 import Modal from '@/components/Modal';
 import StatusPill from '@/components/StatusPill';
 import { useToast } from '@/components/Toast';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { formatValue, timeAgo } from '@/lib/format';
+import { timeAgo } from '@/lib/format';
 import type { Device } from '@/lib/types';
 
 export default function DashboardPage() {
+  return <Suspense fallback={<div className="card muted">Memuat kebun...</div>}><DashboardContent /></Suspense>;
+}
+function DashboardContent() {
   const { user } = useAuth();
   const toast = useToast();
   const router = useRouter();
   const [devices, setDevices] = useState<Device[] | null>(null);
   const [error, setError] = useState('');
   const [adding, setAdding] = useState(false);
+  const search = useSearchParams();
+  useEffect(() => { if (search.get('add') === '1') { setAdding(true); router.replace('/dashboard', { scroll: false }); } }, [search, router]);
 
   const load = useCallback(() => {
     api
@@ -38,56 +44,15 @@ export default function DashboardPage() {
     return () => clearInterval(t);
   }, [load]);
 
-  const online = devices?.filter((d) => d.online).length ?? 0;
-  const temps = devices?.map((d) => d.latestReading?.temperature).filter((v): v is number => v != null) ?? [];
-  const avgTemp = temps.length ? temps.reduce((a, b) => a + b, 0) / temps.length : null;
-  const lastUpdate = devices
-    ?.map((d) => d.latestReading?.createdAt)
-    .filter(Boolean)
-    .sort()
-    .at(-1);
-
-  const stats = [
-    { label: 'Perangkat', value: devices?.length ?? '—', Icon: Cpu, color: 'var(--info)', bg: 'var(--info-soft)' },
-    { label: 'Online', value: devices ? `${online} / ${devices.length}` : '—', Icon: Wifi, color: 'var(--primary)', bg: 'var(--primary-soft)' },
-    {
-      label: 'Rata-rata suhu',
-      value: avgTemp != null ? `${formatValue(avgTemp, '°C')} °C` : '—',
-      Icon: Thermometer,
-      color: 'var(--c-temp)',
-      bg: 'var(--warning-soft)',
-    },
-    { label: 'Data terakhir', value: timeAgo(lastUpdate) ?? '—', Icon: Clock, color: 'var(--muted)', bg: 'var(--surface-2)' },
-  ];
 
   return (
     <>
-      <div className="page-head">
-        <div>
-          <h1>Halo, {user?.name.split(' ')[0]} 👋</h1>
-          <p className="muted">Ringkasan kondisi greenhouse Anda.</p>
-        </div>
-        <button className="btn primary" onClick={() => setAdding(true)}>
-          <Plus size={18} />
-          Tambah perangkat
-        </button>
-      </div>
+      <section className="farm-hero">
+        <div><span className="farm-eyebrow">KEBUNMU HARI INI</span><h1>Halo, {user?.name.split(' ')[0]}!</h1><p>Tanaman terawat, hati pun tenang.</p><button className="btn primary" onClick={() => setAdding(true)}><Plus size={18} />Tambah Perangkat</button></div>
+        <Mascot eager />
+      </section>
 
       {error && <div className="alert error" style={{ marginBottom: 16 }}>{error}</div>}
-
-      <div className="stats">
-        {stats.map(({ label, value, Icon, color, bg }) => (
-          <div key={label} className="card stat">
-            <div className="stat-icon" style={{ color, background: bg }}>
-              <Icon size={20} />
-            </div>
-            <div>
-              <div className="muted small">{label}</div>
-              <div className="stat-value">{value}</div>
-            </div>
-          </div>
-        ))}
-      </div>
 
       <div className="section-title">
         <h2>Perangkat</h2>
@@ -112,7 +77,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="grid">
+      <div className="farm-panel-grid">
         {devices?.map((d) => (
           <Link key={d.id} href={`/devices/${d.id}`} className="card device-card">
             <div className="top">
@@ -122,7 +87,7 @@ export default function DashboardPage() {
               </div>
               <StatusPill online={d.online} />
             </div>
-            {d.relayLabels.includes('Larutan A') || d.latestReading?.ph != null || d.latestReading?.conductivity != null || d.latestReading?.tds != null ? <><div className="muted small" style={{ marginBottom: 12 }}>1 modul sensor air · 4 kanal dosing</div><WaterMetricGrid reading={d.latestReading} /></> : <MetricGrid reading={d.latestReading} />}
+            <PanelMetrics device={d} />
             <div className="footer">
               <span>{d.latestReading ? `Diperbarui ${timeAgo(d.latestReading.createdAt)}` : 'Belum ada data sensor'}</span>
               <ChevronRight size={18} />

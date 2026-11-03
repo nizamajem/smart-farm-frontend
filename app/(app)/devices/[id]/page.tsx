@@ -1,6 +1,6 @@
 'use client';
 
-import { Activity, ArrowLeft, Check, Copy, Eye, EyeOff, Gauge, Power, PowerOff, Settings, Trash2 } from 'lucide-react';
+import { Activity, ArrowLeft, Check, Copy, Eye, EyeOff, Gauge, Power, Settings, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -9,7 +9,9 @@ import HomeAssistantRelayCard from '@/components/HomeAssistantRelayCard';
 import LineChart from '@/components/LineChart';
 import MqttCard from '@/components/MqttCard';
 import NutrientPanel from '@/components/NutrientPanel';
-import { MetricGrid } from '@/components/Metric';
+import PanelMetrics from '@/components/PanelMetrics';
+import PanelControls from '@/components/PanelControls';
+import Mascot from '@/components/Mascot';
 import { ConfirmDialog } from '@/components/Modal';
 import StatusPill from '@/components/StatusPill';
 import { useToast } from '@/components/Toast';
@@ -18,16 +20,8 @@ import { useAuth } from '@/lib/auth';
 import { timeAgo } from '@/lib/format';
 import type { Device, HaRelayStatus, RelayCommand, SensorReading } from '@/lib/types';
 
-const STATUS_LABEL: Record<RelayCommand['status'], string> = {
-  pending: 'Menunggu perangkat',
-  sent: 'Dikirim ke perangkat',
-  done: 'Selesai',
-  expired: 'Tidak terkirim',
-  failed: 'Gagal',
-};
 
 const SOURCE_LABEL = { mqtt: 'MQTT', ha: 'Home Assistant', http: 'HTTP' } as const;
-
 type Tab = 'nutrients' | 'overview' | 'control' | 'settings';
 const TABS: { id: Tab; label: string; Icon: typeof Gauge }[] = [
   { id: 'nutrients', label: 'Nutrisi & pH', Icon: Gauge },
@@ -96,7 +90,7 @@ export default function DeviceDetailPage() {
         Kembali ke dashboard
       </Link>
 
-      <div className="page-head">
+      <div className="page-head farm-device-heading">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <h1>{device.name}</h1>
@@ -107,6 +101,7 @@ export default function DeviceDetailPage() {
             {device.lastSeenAt ? `aktif ${timeAgo(device.lastSeenAt)}` : 'belum pernah mengirim data'}
           </p>
         </div>
+        <Mascot scene="water" />
       </div>
 
       {error && <div className="alert error" style={{ marginBottom: 16 }}>{error}</div>}
@@ -139,7 +134,7 @@ export default function DeviceDetailPage() {
                 </p>
               </div>
             </div>
-            <MetricGrid reading={device.latestReading} wide />
+            <PanelMetrics device={device} />
           </div>
           <div className="card">
             <div className="card-head">
@@ -164,7 +159,7 @@ export default function DeviceDetailPage() {
         </>
       )}
 
-      {tab === 'control' && <ControlTab device={device} commands={commands} relayStates={relayStates} relayError={relayError} onSent={() => { load(); refreshRelays(); }} toast={toast} />}
+      {tab === 'control' && <PanelControls device={device} />}
 
       {tab === 'settings' && (
         <SettingsTab
@@ -178,117 +173,6 @@ export default function DeviceDetailPage() {
         />
       )}
     </>
-  );
-}
-
-function ControlTab({
-  device,
-  commands,
-  onSent,
-  toast,
-  relayStates,
-  relayError,
-}: {
-  device: Device;
-  commands: RelayCommand[];
-  onSent: () => void;
-  toast: ReturnType<typeof useToast>;
-  relayStates: HaRelayStatus[];
-  relayError: string;
-}) {
-  const [busy, setBusy] = useState<string | null>(null);
-
-  async function send(relay: number, action: 'ON' | 'OFF') {
-    setBusy(`${relay}${action}`);
-    try {
-      await api.sendCommand(device.id, relay, action, action === 'ON' ? 3000 : undefined);
-      toast(`${device.relayLabels[relay - 1]}: ${device.haRelays?.[`relay${relay}` as keyof typeof device.haRelays] ? action === 'ON' ? 'uji selesai, perintah OFF dikirim ke HA' : 'perintah OFF dikirim ke HA' : `perintah ${action === 'ON' ? 'nyalakan' : 'matikan'} dikirim`}`);
-      onSent();
-    } catch (e) {
-      toast((e as Error).message, 'error');
-      onSent();
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  const lastFor = (relay: number) => commands.find((c) => c.relay === relay);
-
-  return (
-    <div className="two-col">
-      <div className="card">
-        <div className="card-head">
-          <div>
-            <h2>Kontrol relay</h2>
-            <p className="muted small">Uji nyala selama 3 detik. Kanal HA menerima perintah OFF dari server setelah uji; kanal MQTT/HTTP mengikuti auto-OFF firmware.</p>
-          </div>
-        </div>
-        {device.haRelays && <div className="alert info" style={{ marginBottom: 12 }}>Pastikan auto-OFF perangkat atau otomasi HA juga aktif. Perintah OFF server bergantung pada koneksi HA.</div>}
-        {relayError && <div className="alert error" style={{ marginBottom: 12 }}>{relayError}</div>}
-        {!device.online && !device.haRelays && (
-          <div className="alert info" style={{ marginBottom: 12 }}>
-            <span>Perangkat sedang offline. Perintah akan menunggu maks. 30 detik, lalu dibatalkan.</span>
-          </div>
-        )}
-        <div className="relays">
-          {device.relayLabels.map((label, i) => {
-            const last = lastFor(i + 1);
-            const haEntity = device.haRelays?.[`relay${i + 1}` as keyof typeof device.haRelays];
-            const state = relayStates.find((s) => s.relay === i + 1 && s.entityId === haEntity);
-            return (
-              <div key={i} className="relay">
-                <div className="relay-name">
-                  <span className="relay-num">{i + 1}</span>
-                  <div>
-                    <div style={{ fontWeight: 600 }}>{label}</div>
-                    {haEntity && <div className="muted small">HA · {state?.state === 'on' ? 'Nyala' : state?.state === 'off' ? 'Mati' : 'Status belum tersedia'}</div>}
-                    <div className="muted small">
-                      {last ? `Perintah terakhir: ${last.action === 'ON' ? 'nyalakan' : 'matikan'} · ${STATUS_LABEL[last.status].toLowerCase()}` : 'Belum pernah dipakai'}
-                    </div>
-                  </div>
-                </div>
-                <div className="relay-actions">
-                  <button className="btn primary sm" disabled={!!busy || (!!haEntity && state?.state !== 'off')} onClick={() => send(i + 1, 'ON')}>
-                    <Power size={15} />
-                    Uji 3 detik
-                  </button>
-                  <button className="btn sm" disabled={!!busy && !haEntity} onClick={() => send(i + 1, 'OFF')}>
-                    <PowerOff size={15} />
-                    Matikan
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="card">
-        <div className="card-head">
-          <h2>Riwayat perintah</h2>
-        </div>
-        {commands.length === 0 ? (
-          <p className="muted" style={{ margin: 0 }}>
-            Belum ada perintah yang dikirim.
-          </p>
-        ) : (
-          <div className="list">
-            {commands.slice(0, 10).map((c) => (
-              <div key={c.id} className="list-row">
-                <span className="relay-num">{c.relay}</span>
-                <div className="grow">
-                  <div className="title">
-                    {device.relayLabels[c.relay - 1]} · {c.action === 'ON' ? 'Nyalakan' : 'Matikan'}
-                  </div>
-                  <div className="muted small">{timeAgo(c.createdAt)}{c.transport === 'ha' ? ' · Home Assistant' : ''}</div>
-                </div>
-                <span className={`status-text ${c.status}`}>{STATUS_LABEL[c.status]}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
   );
 }
 

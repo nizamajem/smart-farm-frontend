@@ -36,7 +36,7 @@ export default function DownloadAppCard() {
   return (
     <div className="download-box">
       <a className="download-app" href={downloadUrl} download>
-        <img src="/icon.png" alt="" width={40} height={40} style={{ borderRadius: 10 }} />
+        <img src="/mascot/owl-icon.png" alt="" width={40} height={40} style={{ borderRadius: 10 }} />
         <span style={{ flex: 1, minWidth: 0 }}>
           <b>Unduh aplikasi Android</b>
           <span className="muted small" style={{ display: 'block' }}>

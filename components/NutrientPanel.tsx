@@ -139,7 +139,7 @@ export default function NutrientPanel({ device, commands, relayStates = [], onSe
       </div>
       {view === 'water' && <WaterGuide key={String(example)} deviceId={device.id} example={example} reading={example ? { ...REFERENCE, createdAt: new Date().toISOString() } : reading} online={example || device.online} />}
       {view === 'ph' && <PhDoser key={device.id} deviceId={device.id} onCheckWater={() => setView('water')} />}
-      {view === 'flow' && <TankFlow />}
+      {view === 'flow' && <TankFlow reading={reading} />}
       {view === 'mix' && <MixPlanner key={device.id} deviceId={device.id} ownerId={device.ownerId} onPumpsSaved={setServerData} onCheckWater={() => setView('water')} />}
       <div className="nutrient-layout" hidden={view === 'ph' || view === 'mix' || view === 'flow'}>
         <details className="card water-module simple-sensor-details" hidden={view !== 'water'}>

@@ -16,6 +16,9 @@ export interface AuthResponse {
 }
 
 export interface SensorReading {
+  flowIn?: number | null;
+  flowOut?: number | null;
+  deviceName?: string;
   id: number;
   deviceId: number;
   temperature: number | null;

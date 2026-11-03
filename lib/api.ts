@@ -127,6 +127,8 @@ export const api = {
   haStates: (domain = 'sensor') => request<HaState[]>(`/home-assistant/states?domain=${domain}`),
   haRelayEntities: () => request<HaState[]>('/home-assistant/relay-entities'),
   haRelayStatus: (deviceId: number) => request<HaRelayStatus[]>(`/home-assistant/devices/${deviceId}/relays`),
+  manualRelay: (id: number, relay: number, on: boolean) => request<HaRelayStatus[]>(`/home-assistant/devices/${id}/relays/manual`, { method: 'POST', body: JSON.stringify({ relay, action: on ? 'ON' : 'OFF' }) }),
+  readingHistory: (from: string, to: string, offset = 0, deviceId?: number) => request<SensorReading[]>(`/devices/${deviceId == null ? 'readings/history' : `${deviceId}/readings`}?${new URLSearchParams({ from, to, offset: String(offset), limit: '200' })}`),
   setHaRelays: (deviceId: number, map: HaRelayMap) => request<Device>(`/home-assistant/devices/${deviceId}/relays`, { method: 'PUT', body: JSON.stringify(map) }),
   haSync: () => request<HaSyncResult>('/home-assistant/sync', { method: 'POST' }),
   setHaEntities: (deviceId: number, map: HaEntityMap) =>

@@ -4,7 +4,7 @@ import { CircleAlert, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import DownloadAppCard from '@/components/DownloadAppCard';
-import ThemeSwitch from '@/components/ThemeSwitch';
+import Mascot from '@/components/Mascot';
 import { useAuth } from '@/lib/auth';
 
 export default function LoginPage() {
@@ -15,13 +15,6 @@ export default function LoginPage() {
   const [show, setShow] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  // Akun demo hanya ada di lingkungan development (SEED_DEMO), jangan tampilkan di server produksi
-  const [isLocal, setIsLocal] = useState(false);
-
-  useEffect(() => {
-    setIsLocal(['localhost', '127.0.0.1'].includes(window.location.hostname));
-  }, []);
-
   useEffect(() => {
     if (user) router.replace('/dashboard');
   }, [user, router]);
@@ -41,17 +34,20 @@ export default function LoginPage() {
 
   return (
     <main className="auth-page">
-      <div className="auth-theme">
-        <ThemeSwitch />
-      </div>
+      <section className="farm-auth-story" aria-label="Smart Farm">
+        <div className="farm-auth-brand"><img src="/mascot/owl-icon.png" alt="" width={48} height={48} /><strong>Smart Farm</strong></div>
+        <Mascot eager />
+        <h1>Rawat tanaman,<br />lebih mudah.</h1>
+        <p>Pantau air, atur nutrisi, dan kendalikan panel.</p>
+      </section>
       <form className="card auth-card" onSubmit={submit}>
         <div className="brand">
-          <img className="brand-logo" src="/icon.png" alt="" />
+          <img className="brand-logo" src="/mascot/owl-icon.png" alt="" />
           Smart Farm
         </div>
         <div>
           <h1>Selamat datang</h1>
-          <p className="muted">Masuk untuk memantau dan mengendalikan greenhouse Anda.</p>
+          <p className="muted">Masuk ke kebunmu.</p>
         </div>
 
         <label className="field">
@@ -104,13 +100,7 @@ export default function LoginPage() {
           Belum punya akun? Hubungi admin untuk dibuatkan.
         </p>
         <DownloadAppCard />
-        {isLocal && (
-          <div className="alert info small">
-            <span>
-              Akun demo — admin: <b>admin@smartfarm.local</b> / admin123 · user: <b>user@smartfarm.local</b> / user123
-            </span>
-          </div>
-        )}
+
       </form>
     </main>
   );
