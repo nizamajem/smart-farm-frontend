@@ -1835,3 +1835,29 @@ h1 { letter-spacing: -.035em; }
 }
 @media (max-width: 360px) { .farm-hero > .farm-mascot { width: 85px; } .farm-metric { padding: 11px; } .farm-metric strong { font-size: 1.1rem; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
+
+/* Website navigation stays in a sidebar; mobile apps keep their bottom bar. */
+.farm-with-sidebar { display: grid; grid-template-columns: 248px minmax(0, 1fr); }
+.farm-sidebar { position: sticky; top: 0; height: 100dvh; display: flex; flex-direction: column; padding: 24px 16px 16px; border-right: 1px solid var(--border); background: white; overflow-y: auto; }
+.farm-sidebar-brand { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 22px; }
+.farm-sidebar-brand .farm-brand { gap: 9px; font-size: 1.2rem; }
+.farm-sidebar-nav { display: grid; gap: 5px; }
+.farm-sidebar-nav a { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 15px; color: var(--muted); font-weight: 750; }
+.farm-sidebar-nav a:hover { background: #f2f7ed; color: var(--primary); }
+.farm-sidebar-nav a.active { background: #e3f2dc; color: #16872e; font-weight: 900; }
+.farm-sidebar-footer { margin-top: auto; padding-top: 24px; text-align: center; display: grid; justify-items: center; gap: 8px; color: var(--muted); font-size: .75rem; }
+.farm-sidebar-footer img { max-width: 100%; object-fit: contain; }
+.farm-workspace { min-width: 0; }
+.farm-header-title { font-weight: 800; }
+.farm-menu-toggle { display: none; }
+.farm-mobile-drawer { padding: 0; border: 0; margin: 0; max-height: none; height: 100dvh; width: min(290px, 85vw); max-width: none; background: white; color: var(--text); }
+.farm-mobile-drawer::backdrop { background: #18351f66; backdrop-filter: blur(2px); }
+.farm-drawer-inner { min-height: 100%; display: flex; flex-direction: column; padding: 20px 16px; }
+@media (max-width: 850px) {
+  .farm-with-sidebar { display: block; }
+  .farm-sidebar { display: none; }
+  .farm-menu-toggle { display: inline-flex; }
+  .farm-header-title { margin-right: auto; }
+  .farm-header-inner { gap: 12px; }
+  .farm-content { padding-bottom: 32px; }
+}

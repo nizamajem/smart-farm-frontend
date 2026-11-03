@@ -20,3 +20,8 @@ node scripts/check-web-theme.cjs
 ```
 
 The browser script mocks all API traffic and blocks external requests. It checks login/logout, fixed light theme even with an old dark preference, navigation, admin access, global history, manual ON persistence/OFF, MCB, failure states, add-device dialog, and layouts at 1440, 390 and 320 pixels. Screenshots are saved under `../artifacts/ui/web-mobile-theme`.
+
+
+## Website sidebar preference
+
+Website navigation now uses a fixed desktop sidebar with primary and admin links, plus the existing profile/logout menu. At 850px and below it becomes a native modal drawer opened with Buka menu; native dialog focus containment, Escape, and the close button are supported. Website bottom navigation is removed. Mobile Flutter navigation is unchanged. Production build and mocked browser checks cover desktop and 390/320px navigation, including opening/closing the drawer.
