@@ -61,7 +61,7 @@ export interface RelayCommand {
   ackAt: string | null;
 }
 
-export type HaMetric = 'temperature' | 'humidity' | 'soilMoisture' | 'lightLux' | 'ph' | 'orp' | 'conductivity' | 'tds' | 'salinity' | 'specificGravity' | 'conductivityFactor';
+export type HaMetric = 'temperature' | 'humidity' | 'soilMoisture' | 'lightLux' | 'ph' | 'orp' | 'conductivity' | 'tds' | 'salinity' | 'specificGravity' | 'conductivityFactor' | 'flowIn' | 'flowOut';
 export type HaEntityMap = Partial<Record<HaMetric, string>>;
 export type HaRelayKey = 'relay1' | 'relay2' | 'relay3' | 'relay4';
 export type HaRelayMap = Partial<Record<HaRelayKey, string>>;

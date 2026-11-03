@@ -15,6 +15,8 @@ const METRICS: { key: HaMetric; label: string }[] = [
   { key: 'tds', label: 'TDS (ppm)' },
   { key: 'salinity', label: 'Salinitas (ppm)' },
   { key: 'specificGravity', label: 'Berat jenis' },
+  { key: 'flowIn', label: 'Air masuk (L/menit)' },
+  { key: 'flowOut', label: 'Air nutrisi keluar (L/menit)' },
   { key: 'conductivityFactor', label: 'Faktor konduktivitas' },
 
 ];
