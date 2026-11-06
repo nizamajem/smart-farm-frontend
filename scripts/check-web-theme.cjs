@@ -15,6 +15,7 @@ async function main() {
   const relayStates = [false, false, false, false];
   const user = { id: 1, name: 'Petani', email: 'petani@example.invalid', role: 'admin', createdAt: new Date().toISOString() };
   const reading = (deviceId, index = 0) => ({ id: deviceId * 100 + index, deviceId, deviceName: `Panel ${deviceId === 1 ? 'A' : 'B'}`, temperature: 27 + index * .1, humidity: 65 - index, lightLux: 1250 + index * 12, ph: 6.3 + index * .01, tds: 780 + index * 2, conductivity: 1560, flowIn: 2, flowOut: 1.8, source: 'ha', createdAt: new Date(Date.now() - index * 60000).toISOString() });
+  const edits = new Map();
   const device = id => ({ id, name: `Panel ${id === 1 ? 'A' : 'B'}`, location: 'Greenhouse', ownerId: 1, apiKey: 'fixture-only', relayLabels: ['Larutan A', 'Larutan B', 'pH Up', 'pH Down'], online: true, lastSeenAt: new Date().toISOString(), latestReading: reading(id), haRelays: { relay1: 'switch.a', relay2: 'switch.b', relay3: 'switch.up', relay4: 'switch.down' }, haMcbEntity: 'switch.mcb', haMcbSensors: { power: 'sensor.power', energy: 'sensor.energy' }, createdAt: new Date().toISOString() });
   const relays = () => relayStates.map((on, i) => ({ relay: i + 1, entityId: `switch.relay_${i + 1}`, state: on ? 'on' : 'off', friendlyName: `Relay ${i + 1}`, updatedAt: new Date().toISOString() }));
   const mcb = () => ({ entityId: 'switch.mcb', state: mcbOn ? 'on' : 'off', power: { value: 120, updatedAt: new Date().toISOString() }, energy: { value: 3.2, updatedAt: new Date().toISOString() } });
@@ -26,14 +27,18 @@ async function main() {
       return route.continue();
     }
     const json = (body, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body), headers: {'Access-Control-Allow-Origin':'*'} });
-    if (method === 'OPTIONS') return route.fulfill({ status:204,headers:{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'*','Access-Control-Allow-Methods':'GET,POST,PUT'} });
+    if (method === 'OPTIONS') return route.fulfill({ status:204,headers:{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'*','Access-Control-Allow-Methods':'GET,POST,PUT,PATCH'} });
     if (p === '/api/auth/login') return json({ accessToken: 'fixture-token', user });
     if (p === '/api/auth/me') return json(user);
     if (method === 'POST' && p.includes('app-open')) return json({ok:true});
     if (p === '/api/app-releases/latest') return json({release:null});
-    if (p === '/api/devices') return json([device(1),device(2)]);
+    if (p === '/api/devices') return json([1,2,3].map(id => ({...device(id), ...edits.get(id)})));
     if (p === '/api/devices/readings/history') return json([reading(1,1),reading(2,2),reading(1,3)]);
-    if (/^\/api\/devices\/\d+$/.test(p)) return json(device(Number(p.split('/').at(-1))));
+    if (/^\/api\/devices\/\d+$/.test(p)) {
+      const id = Number(p.split('/').at(-1));
+      if (method === 'PATCH') edits.set(id, request.postDataJSON());
+      return json({...device(id), ...edits.get(id)});
+    }
     if (/^\/api\/devices\/\d+\/readings$/.test(p)) return json(Array.from({length:8},(_,i)=>reading(Number(p.split('/')[3]),7-i)));
     if (p.endsWith('/commands') && method === 'GET') return json([]);
     if (p.endsWith('/nutrients') && method === 'GET') return json({recipe:{waterLiters:1000,aMl:10,bMl:10},pumps:{a:{seconds:5,ml:10},b:{seconds:5,ml:10},phUp:{seconds:3600,ml:150},phDown:{seconds:60,ml:150}},mix:null,phDose:null});
@@ -60,6 +65,13 @@ async function main() {
     await page.waitForURL('**/dashboard');
     await page.locator('.farm-panel-grid .farm-metric').first().waitFor();
     await page.getByText('120',{exact:false}).first().waitFor();
+    assert.equal(await page.locator('.farm-panel-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length), 3);
+    await page.getByRole('button', {name:'Edit panel Panel A', exact:true}).click();
+    await page.getByLabel('Nama panel', {exact:true}).fill('Green House 1');
+    await page.getByLabel('Lokasi').fill('Lombok Timur');
+    await page.getByRole('button', {name:'Simpan', exact:true}).click();
+    await page.getByRole('heading', {name:'Green House 1', exact:true}).waitFor();
+    assert.deepEqual(edits.get(1), {name:'Green House 1',location:'Lombok Timur'});
     await screenshot('dashboard-desktop'); await noOverflow();
     assert.equal(await page.getByText('Rata-rata suhu',{exact:true}).count(),0);
     await page.locator('a[href="/devices/1"]').click();

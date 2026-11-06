@@ -162,6 +162,8 @@ export const api = {
   device: (id: number) => request<Device>(`/devices/${id}`),
   createDevice: (name: string, location: string, relayLabels?: string[]) =>
     request<Device>('/devices', { method: 'POST', body: JSON.stringify({ name, location, relayLabels }) }),
+  updateDevice: (id: number, name: string, location: string) =>
+    request<Device>(`/devices/${id}`, { method: 'PATCH', body: JSON.stringify({ name, location }) }),
   deleteDevice: (id: number) => request<{ ok: true }>(`/devices/${id}`, { method: 'DELETE' }),
   readings: (id: number, limit = 48) => request<SensorReading[]>(`/devices/${id}/readings?limit=${limit}`),
   commands: (id: number) => request<RelayCommand[]>(`/devices/${id}/commands`),

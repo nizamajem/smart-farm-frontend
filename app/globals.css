@@ -1743,7 +1743,10 @@ h1 { letter-spacing: -.035em; }
 .farm-eyebrow { color: #54815b; font-size: .73rem; letter-spacing: .12em; font-weight: 900; }
 .farm-mascot { display: block; object-fit: contain; height: auto; max-width: 100%; }
 .farm-hero > .farm-mascot { width: 285px; max-height: 225px; }
-.farm-panel-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+.farm-panel-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.panel-card-link { display: block; color: inherit; text-decoration: none; }
+.panel-edit-button { margin-top: 12px; width: 100%; }
+@media (min-width: 761px) and (max-width: 1200px) { .farm-panel-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .farm-panel-grid .device-card { color: var(--text); padding: 22px; transition: border-color .15s, box-shadow .15s; }
 .farm-panel-grid .device-card:hover { border-color: #a7c9a1; box-shadow: 0 8px 24px #203d2808; }
 .farm-panel-grid .device-card h2 { font-size: 1.3rem; }

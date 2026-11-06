@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronRight, Plus, Sprout } from 'lucide-react';
+import { ChevronRight, Pencil, Plus, Sprout } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useState } from 'react';
@@ -25,6 +25,7 @@ function DashboardContent() {
   const [devices, setDevices] = useState<Device[] | null>(null);
   const [error, setError] = useState('');
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<Device | null>(null);
   const search = useSearchParams();
   useEffect(() => { if (search.get('add') === '1') { setAdding(true); router.replace('/dashboard', { scroll: false }); } }, [search, router]);
 
@@ -79,7 +80,8 @@ function DashboardContent() {
 
       <div className="farm-panel-grid">
         {devices?.map((d) => (
-          <Link key={d.id} href={`/devices/${d.id}`} className="card device-card">
+          <article key={d.id} className="card device-card">
+          <Link href={`/devices/${d.id}`} className="panel-card-link">
             <div className="top">
               <div style={{ minWidth: 0 }}>
                 <h2>{d.name}</h2>
@@ -93,9 +95,17 @@ function DashboardContent() {
               <ChevronRight size={18} />
             </div>
           </Link>
+          <button className="btn panel-edit-button" onClick={() => setEditing(d)} aria-label={`Edit panel ${d.name}`}><Pencil size={15} />Edit panel</button>
+          </article>
         ))}
       </div>
 
+      {editing && <EditDeviceModal device={editing} onClose={() => setEditing(null)} onSaved={(updated) => {
+        setDevices((current) => current?.map((d) => d.id === updated.id ? updated : d) ?? null);
+        setEditing(null);
+        toast('Informasi panel disimpan');
+        load();
+      }} />}
       {adding && (
         <AddDeviceModal
           onClose={() => setAdding(false)}
@@ -163,4 +173,30 @@ function AddDeviceModal({ onClose, onCreated }: { onClose: () => void; onCreated
       </form>
     </Modal>
   );
+}
+
+function EditDeviceModal({ device, onClose, onSaved }: { device: Device; onClose: () => void; onSaved: (device: Device) => void }) {
+  const [name, setName] = useState(device.name);
+  const [location, setLocation] = useState(device.location ?? '');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setError('');
+    try { onSaved(await api.updateDevice(device.id, name.trim(), location.trim())); }
+    catch { setError('Belum bisa menyimpan. Periksa koneksi dan coba lagi.'); setBusy(false); }
+  }
+  return <Modal title="Edit panel" onClose={() => { if (!busy) onClose(); }}>
+    <form onSubmit={submit} style={{ display: 'grid', gap: 14 }}>
+      <label className="field">Nama panel<input value={name} onChange={(event) => setName(event.target.value)} required minLength={2} maxLength={255} autoFocus disabled={busy} /></label>
+      <label className="field">Lokasi <span className="hint">Opsional</span><input value={location} onChange={(event) => setLocation(event.target.value)} maxLength={255} placeholder="mis. Lombok Timur" disabled={busy} /></label>
+      {error && <div role="alert" className="alert error">{error}</div>}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+        <button type="button" className="btn" onClick={onClose} disabled={busy}>Batal</button>
+        <button className="btn primary" disabled={busy || name.trim().length < 2}>{busy ? 'Menyimpan...' : 'Simpan'}</button>
+      </div>
+    </form>
+  </Modal>;
 }
