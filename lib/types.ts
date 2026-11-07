@@ -18,6 +18,10 @@ export interface AuthResponse {
 export interface SensorReading {
   flowIn?: number | null;
   flowOut?: number | null;
+  flowOutTotal?: number | null;
+  mcbPower?: number | null;
+  mcbVoltage?: number | null;
+  mcbCurrent?: number | null;
   deviceName?: string;
   id: number;
   deviceId: number;
@@ -45,7 +49,7 @@ export interface Device {
   haEntities: HaEntityMap | null;
   haRelays?: HaRelayMap | null;
   haMcbEntity?: string | null;
-  haMcbSensors?: { power?: string; energy?: string } | null;
+  haMcbSensors?: { power?: string; energy?: string; voltage?: string; current?: string } | null;
   ownerId: number;
   lastSeenAt: string | null;
   createdAt: string;
@@ -64,7 +68,7 @@ export interface RelayCommand {
   ackAt: string | null;
 }
 
-export type HaMetric = 'temperature' | 'humidity' | 'soilMoisture' | 'lightLux' | 'ph' | 'orp' | 'conductivity' | 'tds' | 'salinity' | 'specificGravity' | 'conductivityFactor' | 'flowIn' | 'flowOut';
+export type HaMetric = 'temperature' | 'humidity' | 'soilMoisture' | 'lightLux' | 'ph' | 'orp' | 'conductivity' | 'tds' | 'salinity' | 'specificGravity' | 'conductivityFactor' | 'flowIn' | 'flowOut' | 'flowOutTotal';
 export type HaEntityMap = Partial<Record<HaMetric, string>>;
 export type HaRelayKey = 'relay1' | 'relay2' | 'relay3' | 'relay4';
 export type HaRelayMap = Partial<Record<HaRelayKey, string>>;
@@ -77,6 +81,8 @@ export interface HaRelayStatus {
 }
 
 export interface HaMcbStatus {
+  voltage?: {value:number;updatedAt:string|null} | null;
+  current?: {value:number;updatedAt:string|null} | null;
   power?: { value: number; updatedAt: string | null } | null;
   energy?: { value: number; updatedAt: string | null } | null;
   entityId: string | null;
