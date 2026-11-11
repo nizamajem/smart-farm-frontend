@@ -4,6 +4,8 @@ import { Activity, ArrowLeft, Check, Copy, Eye, EyeOff, Gauge, Power, Settings, 
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
+import SmartMcbCard from '@/components/SmartMcbCard';
+import PanelAccessories from '@/components/PanelAccessories';
 import HomeAssistantCard from '@/components/HomeAssistantCard';
 import HomeAssistantRelayCard from '@/components/HomeAssistantRelayCard';
 import LineChart from '@/components/LineChart';
@@ -219,6 +221,8 @@ function SettingsTab({
     <>
       {isAdmin && <HomeAssistantRelayCard key={`relays-${device.id}`} device={device} onSaved={onSaved} />}
       {isAdmin && <HomeAssistantCard key={device.id} device={device} onSaved={onSaved} />}
+      {isAdmin && <SmartMcbCard key={`mcb-${device.id}`} device={device} settingsOnly onSaved={onSaved} />}
+      {isAdmin && <PanelAccessories key={`accessories-${device.id}`} device={device} settingsOnly onSaved={onSaved} />}
       <MqttCard deviceId={device.id} />
 
       <div className="card">
