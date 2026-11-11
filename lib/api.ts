@@ -100,6 +100,9 @@ function uploadRelease(
 }
 
 export const api = {
+  accessoryStatus: (id:number) => request<import('./types').AccessoryStatus>(`/devices/${id}/accessories`),
+  saveAccessories: (id:number, config:import('./types').PanelAccessories) => request<import('./types').PanelAccessories>(`/devices/${id}/accessories`, {method:'PATCH',body:JSON.stringify(config)}),
+  commandAccessory: (id:number,key:string,action:'ON'|'OFF') => request<import('./types').AccessoryStatus>(`/devices/${id}/accessories/command`, {method:'POST',body:JSON.stringify({key,action})}),
   nutrientStatus: (id: number) => request<NutrientStatus>(`/devices/${id}/nutrients`),
   phDosePlan: (id: number, channel: 'phUp' | 'phDown', ml: number) => request<PhPlan>(`/devices/${id}/nutrients/ph/plan`, { method: 'POST', body: JSON.stringify({ channel, ml }) }),
   startPhDose: (id: number, plan: PhPlan, requestId: string) => request<NutrientStatus>(`/devices/${id}/nutrients/ph/dose`, { method: 'POST', body: JSON.stringify({ channel: plan.channel, ml: plan.ml, calibrationKey: plan.calibrationKey, requestId }) }),

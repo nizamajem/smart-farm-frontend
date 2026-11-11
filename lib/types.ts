@@ -40,7 +40,13 @@ export interface SensorReading {
   createdAt: string;
 }
 
+export interface AccessoryMapping { name: string; entity?: string; status?: string; depth?: string; moisture?: string; temperature?: string }
+export interface PanelAccessories { plugs: AccessoryMapping[]; valve: AccessoryMapping; level: AccessoryMapping; soils: AccessoryMapping[] }
+export interface AccessoryValue { entityId: string | null; state: string | null; value: number | null; unit: string | null; updatedAt: string | null }
+export interface AccessoryStatus { plugs: (AccessoryValue & {key:string;name:string})[]; valve: AccessoryValue & {key:string;name:string}; level: {name:string;status:AccessoryValue;depth:AccessoryValue}; soils: {name:string;moisture:AccessoryValue;temperature:AccessoryValue}[] }
+
 export interface Device {
+  accessories?: PanelAccessories | null;
   id: number;
   name: string;
   location: string;

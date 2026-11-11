@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import Modal from './Modal';
 import TankFlow from './TankFlow';
 import SmartMcbCard from './SmartMcbCard';
+import PanelAccessories from './PanelAccessories';
 import { WaterGuide } from './NutrientGuide';
 import MixPlanner from './MixPlanner';
 import PhDoser from './PhDoser';
@@ -130,6 +131,7 @@ export default function NutrientPanel({ device, commands, relayStates = [], onSe
       {storageError && <div className="alert error" role="alert">{storageError}</div>}
 
       <SmartMcbCard device={device} />
+    <PanelAccessories device={device} />
       <div className="garden-tabs" role="group" aria-label="Pilih kegiatan">
         <button className="btn" aria-pressed={view === 'water'} onClick={() => setView('water')}><Droplets size={20} /> Cek Air</button>
         <button className="btn" aria-pressed={view === 'ph'} onClick={() => setView('ph')}><SlidersHorizontal size={20} /> Atur pH</button>

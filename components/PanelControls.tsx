@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import type { Device, HaRelayStatus } from '@/lib/types';
 import SmartMcbCard from './SmartMcbCard';
+import PanelAccessories from './PanelAccessories';
 import Switch from './Switch';
 
 export default function PanelControls({ device }: { device: Device }) {
@@ -27,6 +28,7 @@ export default function PanelControls({ device }: { device: Device }) {
   }
   return <section className="farm-control" aria-label="Kontrol panel">
     <SmartMcbCard device={device} />
+    <PanelAccessories device={device} />
     <div className="section-title"><h2>Relay</h2><button className="icon-btn" disabled={busy} aria-label="Perbarui relay" onClick={refresh}><RefreshCw size={19} /></button></div>
     {error && <div className="alert error" role="alert">{error}</div>}
     <div className="farm-control-grid">{['Larutan A', 'Larutan B', 'pH Up', 'pH Down'].map((name, i) => {
