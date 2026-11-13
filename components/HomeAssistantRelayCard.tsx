@@ -22,7 +22,7 @@ export default function HomeAssistantRelayCard({ device, onSaved }: { device: De
   async function refresh() {
     setLoading(true);
     try { setEntities(await api.haRelayEntities()); setError(''); }
-    catch (e) { setError((e as Error).message); }
+    catch (e) { setError(`Daftar Home Assistant belum dapat dimuat. ${(e as Error).message}. Anda dapat mengubah ID entity secara manual, lalu muat ulang untuk memeriksa sambungan.`); }
     finally { setLoading(false); }
   }
   useEffect(() => { refresh(); }, []);
@@ -54,12 +54,14 @@ export default function HomeAssistantRelayCard({ device, onSaved }: { device: De
           {missing && <option value={map[key]}>{map[key]} · belum ditemukan</option>}
           {entities.map((entity) => <option value={entity.entity_id} key={entity.entity_id} disabled={KEYS.some((other) => other !== key && map[other] === entity.entity_id)}>{entity.attributes.friendly_name || entity.entity_id} — {entity.entity_id}</option>)}
         </select>
+        <input aria-label={`ID entity relay ${i + 1}`} value={map[key] || ''} disabled={busy} placeholder="switch.nama_relay" autoCapitalize="none" spellCheck={false} onChange={(e) => setMap(current => ({ ...current, [key]: e.target.value.trim() }))} />
+        <span className="hint">ID entity bisa diubah langsung. Kosongkan untuk memakai MQTT/HTTP.</span>
         <span className="hint">{map[key] ? loading ? 'Memeriksa entity…' : missing ? 'Entity tidak ditemukan. Muat ulang atau pilih entity lain.' : `Status di HA: ${stateLabel(selectedEntity?.state)}` : 'Kanal ini tetap memakai protokol perangkat Smart Farm.'}</span>
       </label>;
     })}</div>
     <p className="muted small">Label kanal yang dipetakan akan mengikuti Larutan A, Larutan B, pH Up, dan pH Down. Satu entity hanya boleh dipakai pada satu kanal/panel.</p>
     {duplicate && <div className="alert error">Pilih entity yang berbeda untuk setiap kanal.</div>}
-    {error && <div className="alert error" role="alert">{error}</div>}
+    {error && <div className="alert error" role="alert">{error}<p>Jika penyimpanan gagal, perubahan belum diterapkan. Periksa sambungan Home Assistant, lalu coba simpan kembali.</p></div>}
     <div className="ha-relay-settings-actions"><span className="muted small" role="status">{dirty ? 'Ada perubahan yang belum disimpan' : 'Pemetaan sesuai pengaturan tersimpan'}</span><button className="btn primary" onClick={save} disabled={!dirty || busy || loading || duplicate}><Save size={16} />{busy ? 'Menyimpan…' : 'Simpan pemetaan relay'}</button></div>
   </section>;
 }

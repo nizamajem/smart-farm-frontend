@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { AirVent, ArrowDown, ArrowUp, Droplets, Leaf, Sun, Thermometer, Zap } from 'lucide-react';
+import { timeAgo } from '@/lib/format';
 import { api } from '@/lib/api';
 import type { Device, HaMcbStatus, SensorReading } from '@/lib/types';
 
@@ -43,9 +44,16 @@ export default function PanelMetrics({ device }: { device: Device }) {
     { key: 'flowOutTotal', label: 'Larutan terpakai', value: r?.flowOutTotal, unit: 'liter', Icon: ArrowDown, color: '#079FB4' },
     { key: 'flowOut', label: 'Debit keluar', value: r?.flowOut, unit: 'L/menit', Icon: ArrowUp, color: '#5264B8' },
   ] as const;
-  return <div className="farm-metrics">{metrics.map(({key, label, value, unit, Icon, color}) => <div key={key} className="farm-metric" style={{ backgroundColor: `${color}0C` }}>
+  const help: Record<string, string> = {
+    temperature: 'Pantau perubahan suhu di lokasi sensor.', humidity: 'Kelembapan udara membantu menilai kebutuhan ventilasi.',
+    lightLux: 'Pantau cahaya yang diterima sensor sepanjang hari.', ph: 'Periksa pH sebelum menambah larutan penaik atau penurun pH.',
+    tds: 'Bandingkan kepekatan nutrisi dengan target tanaman dan fase tumbuh.', power: 'Pantau daya alat yang sedang digunakan.',
+    flowOutTotal: 'Total volume yang tercatat oleh sensor, bukan sisa air tandon.', flowOut: 'Periksa aliran saat pompa atau katup dibuka.',
+  };
+  return <section aria-label="Ringkasan kondisi kebun"><p className="muted small" role="status">{r?.createdAt ? `Data sensor diperbarui ${timeAgo(r.createdAt)}. Bandingkan dengan target budidaya Anda.` : 'Data sensor belum masuk. Periksa daya dan sambungan alat.'}</p><div className="farm-metrics">{metrics.map(({key, label, value, unit, Icon, color}) => <div key={key} className="farm-metric" style={{ backgroundColor: `${color}0C` }}>
     <span className="farm-metric-label"><Icon size={18} style={{ color }} />{label}</span>
     <strong>{number(value)} <small>{unit}</small></strong>
+    <small>{help[key]}</small>
     {key === 'power' ? <small>{number(mcb?.voltage?.value)} V ? {number(mcb?.current?.value)} A</small> : value == null ? <small>Belum ada data</small> : <Trend rows={rows} metric={key} color={color} label={label} />}
-  </div>)}</div>;
+  </div>)}</div></section>;
 }
