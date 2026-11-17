@@ -27,7 +27,7 @@ export default function DownloadAppCard() {
 
   if (!release) return null;
 
-  const downloadUrl = api.releaseDownloadUrl();
+  const downloadUrl = api.releaseDownloadUrl(release.id);
   const absoluteDownload = new URL(downloadUrl, window.location.href).href;
   const openAppUrl =
     `intent://open#Intent;scheme=smartfarm;package=${ANDROID_PACKAGE};` +
