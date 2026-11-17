@@ -67,12 +67,13 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
 /** Unggah APK lewat XHR (fetch belum mendukung progres unggahan). */
 function uploadRelease(
-  data: { file: File; notes: string },
+  data: { file: File; notes: string; mandatory: boolean },
   onProgress: (percent: number) => void,
 ): Promise<AppRelease> {
   return new Promise((resolve, reject) => {
     const form = new FormData();
     form.append('notes', data.notes);
+    form.append('mandatory', String(data.mandatory));
     form.append('file', data.file);
 
     const xhr = new XMLHttpRequest();

@@ -126,6 +126,7 @@ export interface HaSyncResult {
 }
 
 export interface AppRelease {
+  mandatory: boolean;
   id: number;
   version: string;
   versionCode: number | null;

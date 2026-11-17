@@ -95,6 +95,7 @@ export default function AppsPage() {
                 </div>
                 <div className="grow">
                   <div className="title">
+                    {r.mandatory && <span className="pill" style={{ marginRight: 6 }}>Wajib diperbarui</span>}
                     Versi {r.version}{' '}
                     {r.id === latestId && (
                       <span className="pill ok" style={{ marginLeft: 6 }}>
@@ -142,6 +143,7 @@ export default function AppsPage() {
 function UploadCard({ latest, onUploaded }: { latest?: AppRelease; onUploaded: (r: AppRelease) => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [notes, setNotes] = useState('');
+  const [mandatory, setMandatory] = useState(false);
   const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState('');
   const [dragging, setDragging] = useState(false);
@@ -163,9 +165,10 @@ function UploadCard({ latest, onUploaded }: { latest?: AppRelease; onUploaded: (
     setError('');
     setProgress(0);
     try {
-      const r = await api.uploadRelease({ file, notes: notes.trim() }, setProgress);
+      const r = await api.uploadRelease({ file, notes: notes.trim(), mandatory }, setProgress);
       setFile(null);
       setNotes('');
+      setMandatory(false);
       if (inputRef.current) inputRef.current.value = '';
       onUploaded(r);
     } catch (err) {
@@ -239,6 +242,14 @@ function UploadCard({ latest, onUploaded }: { latest?: AppRelease; onUploaded: (
           maxLength={1000}
           disabled={uploading}
         />
+      </label>
+
+      <label className="field" style={{ marginTop: 14 }}>
+        <span style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <input type="checkbox" checked={mandatory} onChange={(e) => setMandatory(e.target.checked)} disabled={uploading} style={{ width: 20, height: 20 }} />
+          Wajib diperbarui
+        </span>
+        <span className="hint">Pengguna versi lama harus memasang versi ini sebelum melanjutkan. Android tetap meminta persetujuan instalasi. Berlaku untuk aplikasi yang sudah mendukung pembaruan wajib.</span>
       </label>
 
       {uploading && (
