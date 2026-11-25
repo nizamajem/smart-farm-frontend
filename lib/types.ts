@@ -223,3 +223,7 @@ export interface LogEntry {
 }
 
 export type LogStats = Record<LogChannel, { count: number; errors: number }>;
+
+export interface HstStage { fromDay:number; toDay:number; targetPpm:number; targetPh:number }
+export interface AutomaticConfig { enabled:boolean; ppmEnabled:boolean; phEnabled:boolean; targetPpm:number; targetPh:number; ppmTolerance:number; phTolerance:number; abDoseLiters:number; phDoseMl:number; settleSeconds:number; maxCycles:number; plantedOn?:string; stages?:HstStage[] }
+export interface AutomaticStatus {config:AutomaticConfig|null; state:{cycles:number;message:string}|null; hst:number|null; targets:{targetPpm:number;targetPh:number}|null}

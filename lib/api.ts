@@ -101,6 +101,8 @@ function uploadRelease(
 }
 
 export const api = {
+  automaticNutrients: (id:number) => request<import('./types').AutomaticStatus>(`/devices/${id}/nutrients/automatic`),
+  saveAutomaticNutrients: (id:number,config:import('./types').AutomaticConfig) => request<import('./types').AutomaticStatus>(`/devices/${id}/nutrients/automatic`,{method:'PUT',body:JSON.stringify(config)}),
   accessoryStatus: (id:number) => request<import('./types').AccessoryStatus>(`/devices/${id}/accessories`),
   saveAccessories: (id:number, config:import('./types').PanelAccessories) => request<import('./types').PanelAccessories>(`/devices/${id}/accessories`, {method:'PATCH',body:JSON.stringify(config)}),
   commandAccessory: (id:number,key:string,action:'ON'|'OFF') => request<import('./types').AccessoryStatus>(`/devices/${id}/accessories/command`, {method:'POST',body:JSON.stringify({key,action})}),
