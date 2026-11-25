@@ -43,7 +43,7 @@ export default function HomeAssistantRelayCard({ device, onSaved }: { device: De
   }
 
   return <section className="card ha-relay-settings">
-    <div className="card-head"><div><div className="nutrient-module-title"><House size={20} /><h2>Modul relay dari Home Assistant</h2></div><p className="muted small">Pilih entity Dosing01 yang sesuai untuk setiap larutan. Menyimpan pemetaan tidak menyalakan relay.</p></div><button className="btn sm" onClick={refresh} disabled={loading || busy}><RefreshCw size={15} />{loading ? 'Memuat…' : 'Muat ulang entity'}</button></div>
+    <div className="card-head"><div><div className="nutrient-module-title"><House size={20} /><h2>Pompa Nutrisi & pH · Relay ESP</h2></div><p className="muted small">Aplikasi: Pompa Nutrisi A & B memakai relay 1 + 2, pH UP relay 3, pH DOWN relay 4. Pilih entity ESP yang sesuai. Menyimpan pemetaan tidak menyalakan relay.</p></div><button className="btn sm" onClick={refresh} disabled={loading || busy}><RefreshCw size={15} />{loading ? 'Memuat…' : 'Muat ulang entity'}</button></div>
     <div className="form-grid">{KEYS.map((key, i) => {
       const selectedEntity = entities.find((e) => e.entity_id === map[key]);
       const missing = !!map[key] && !selectedEntity;

@@ -95,6 +95,7 @@ function DashboardContent() {
               <ChevronRight size={18} />
             </div>
           </Link>
+          <Link className="btn" href={`/devices/${d.id}/tanks`}>Cek Level Air</Link>
           <button className="btn panel-edit-button" onClick={() => setEditing(d)} aria-label={`Edit panel ${d.name}`}><Pencil size={15} />Edit panel</button>
           </article>
         ))}

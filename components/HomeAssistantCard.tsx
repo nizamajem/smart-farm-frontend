@@ -7,12 +7,19 @@ import { api } from '@/lib/api';
 import type { Device, HaEntityMap, HaHealth, HaMetric, HaState } from '@/lib/types';
 
 const METRICS: { key: HaMetric; label: string }[] = [
-  { key: 'temperature', label: 'Suhu' },
-  { key: 'humidity', label: 'Kelembapan udara' },
-  { key: 'ph', label: 'pH' },
+  { key: 'waterTemperature', label: 'Kondisi Air · Suhu Air (°C)' },
+  { key: 'temperature', label: 'Monitoring · Suhu GH sensor 1 (°C)' },
+  { key: 'temperature2', label: 'Monitoring · Suhu GH sensor 2 (opsional)' },
+  { key: 'temperature3', label: 'Monitoring · Suhu GH sensor 3 (opsional)' },
+  { key: 'humidity', label: 'Monitoring · Kelembapan udara sensor 1 (%)' },
+  { key: 'humidity2', label: 'Monitoring · Kelembapan udara sensor 2 (opsional)' },
+  { key: 'humidity3', label: 'Monitoring · Kelembapan udara sensor 3 (opsional)' },
+  { key: 'soilMoisture', label: 'Monitoring · Kelembapan Tanah (%)' },
+  { key: 'lightLux', label: 'Monitoring · Intensitas Cahaya (lux)' },
+  { key: 'ph', label: 'Kondisi Air · pH Air' },
   { key: 'orp', label: 'ORP (mV)' },
   { key: 'conductivity', label: 'EC (µS/cm)' },
-  { key: 'tds', label: 'TDS (ppm)' },
+  { key: 'tds', label: 'Kondisi Air · Nutrisi TDS (ppm)' },
   { key: 'salinity', label: 'Salinitas (ppm)' },
   { key: 'specificGravity', label: 'Berat jenis' },
   { key: 'flowOutTotal', label: 'Total larutan terpakai (liter)' },
@@ -83,7 +90,7 @@ export default function HomeAssistantCard({ device, onSaved }: { device: Device;
           </div>
           <p className="muted small">
             {connected
-              ? 'Pilih sensor HA untuk tiap data. Nilainya disalin otomatis setiap 5 menit.'
+              ? 'Label mengikuti aplikasi. Suhu GH dan kelembapan udara dirata-ratakan dari 1–3 sensor terisi yang tersedia. Slot kosong tidak dihitung. Suhu dalam °C dan kelembapan dalam %.'
               : health?.message ?? 'Memeriksa koneksi…'}
           </p>
         </div>

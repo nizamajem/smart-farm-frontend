@@ -35,8 +35,9 @@ export default function PanelMetrics({ device }: { device: Device }) {
   }, [device.id]);
   const r = device.latestReading;
   const metrics = [
-    { key: 'temperature', label: 'Suhu', value: r?.temperature, unit: '°C', Icon: Thermometer, color: '#E88915' },
-    { key: 'humidity', label: 'Udara', value: r?.humidity, unit: '% RH', Icon: AirVent, color: '#258DD8' },
+    { key: 'waterTemperature', label: 'Suhu Air', value: r?.waterTemperature, unit: '°C', Icon: Thermometer, color: '#258DD8' },
+    { key: 'temperature', label: 'Rata-rata Suhu GH', value: r?.temperature, unit: '°C', Icon: Thermometer, color: '#E88915' },
+    { key: 'humidity', label: 'Rata-rata Kelembapan Udara', value: r?.humidity, unit: '% RH', Icon: AirVent, color: '#258DD8' },
     { key: 'lightLux', label: 'Cahaya', value: r?.lightLux, unit: 'lux', Icon: Sun, color: '#C98B17' },
     { key: 'ph', label: 'pH Air', value: r?.ph, unit: 'pH', Icon: Droplets, color: '#009B8D' },
     { key: 'tds', label: 'TDS', value: r?.tds, unit: 'ppm', Icon: Leaf, color: '#4CA65A' },
@@ -45,7 +46,7 @@ export default function PanelMetrics({ device }: { device: Device }) {
     { key: 'flowOut', label: 'Debit keluar', value: r?.flowOut, unit: 'L/menit', Icon: ArrowUp, color: '#5264B8' },
   ] as const;
   const help: Record<string, string> = {
-    temperature: 'Pantau perubahan suhu di lokasi sensor.', humidity: 'Kelembapan udara membantu menilai kebutuhan ventilasi.',
+    waterTemperature: 'Suhu air terpisah dari suhu udara greenhouse.', temperature: 'Rata-rata sensor suhu GH terisi yang tersedia.', humidity: 'Kelembapan udara membantu menilai kebutuhan ventilasi.',
     lightLux: 'Pantau cahaya yang diterima sensor sepanjang hari.', ph: 'Periksa pH sebelum menambah larutan penaik atau penurun pH.',
     tds: 'Bandingkan kepekatan nutrisi dengan target tanaman dan fase tumbuh.', power: 'Pantau daya alat yang sedang digunakan.',
     flowOutTotal: 'Total volume yang tercatat oleh sensor, bukan sisa air tandon.', flowOut: 'Periksa aliran saat pompa atau katup dibuka.',
@@ -54,6 +55,6 @@ export default function PanelMetrics({ device }: { device: Device }) {
     <span className="farm-metric-label"><Icon size={18} style={{ color }} />{label}</span>
     <strong>{number(value)} <small>{unit}</small></strong>
     <small>{help[key]}</small>
-    {key === 'power' ? <small>{number(mcb?.voltage?.value)} V ? {number(mcb?.current?.value)} A</small> : value == null ? <small>Belum ada data</small> : <Trend rows={rows} metric={key} color={color} label={label} />}
+    {key === 'power' ? <small>{number(mcb?.voltage?.value)} V · {number(mcb?.current?.value)} A</small> : value == null ? <small>Belum ada data</small> : <Trend rows={rows} metric={key} color={color} label={label} />}
   </div>)}</div></section>;
 }

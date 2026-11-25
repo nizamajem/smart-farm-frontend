@@ -25,6 +25,7 @@ export interface SensorReading {
   deviceName?: string;
   id: number;
   deviceId: number;
+  waterTemperature?: number | null;
   temperature: number | null;
   humidity: number | null;
   soilMoisture: number | null;
@@ -41,9 +42,11 @@ export interface SensorReading {
 }
 
 export interface AccessoryMapping { name: string; entity?: string; status?: string; depth?: string; moisture?: string; temperature?: string }
-export interface PanelAccessories { plugs: AccessoryMapping[]; valve: AccessoryMapping; level: AccessoryMapping; soils: AccessoryMapping[] }
+export interface TankMapping { key: 'main' | 'a' | 'b'; entity: string; mode: 'percent' | 'calibrated'; emptyValue?: number; fullValue?: number }
+export interface TankStatus extends AccessoryValue { key: 'main' | 'a' | 'b'; name: string; percent: number | null }
+export interface PanelAccessories { curtain?: AccessoryMapping; tanks?: TankMapping[]; plugs: AccessoryMapping[]; valve: AccessoryMapping; level: AccessoryMapping; soils: AccessoryMapping[] }
 export interface AccessoryValue { entityId: string | null; state: string | null; value: number | null; unit: string | null; updatedAt: string | null }
-export interface AccessoryStatus { plugs: (AccessoryValue & {key:string;name:string})[]; valve: AccessoryValue & {key:string;name:string}; level: {name:string;status:AccessoryValue;depth:AccessoryValue}; soils: {name:string;moisture:AccessoryValue;temperature:AccessoryValue}[] }
+export interface AccessoryStatus { curtain?: AccessoryValue & {key:string;name:string}; tanks?: TankStatus[]; plugs: (AccessoryValue & {key:string;name:string})[]; valve: AccessoryValue & {key:string;name:string}; level: {name:string;status:AccessoryValue;depth:AccessoryValue}; soils: {name:string;moisture:AccessoryValue;temperature:AccessoryValue}[] }
 
 export interface Device {
   accessories?: PanelAccessories | null;
@@ -74,7 +77,7 @@ export interface RelayCommand {
   ackAt: string | null;
 }
 
-export type HaMetric = 'temperature' | 'humidity' | 'soilMoisture' | 'lightLux' | 'ph' | 'orp' | 'conductivity' | 'tds' | 'salinity' | 'specificGravity' | 'conductivityFactor' | 'flowIn' | 'flowOut' | 'flowOutTotal';
+export type HaMetric = 'waterTemperature' | 'temperature2' | 'temperature3' | 'humidity2' | 'humidity3' | 'temperature' | 'humidity' | 'soilMoisture' | 'lightLux' | 'ph' | 'orp' | 'conductivity' | 'tds' | 'salinity' | 'specificGravity' | 'conductivityFactor' | 'flowIn' | 'flowOut' | 'flowOutTotal';
 export type HaEntityMap = Partial<Record<HaMetric, string>>;
 export type HaRelayKey = 'relay1' | 'relay2' | 'relay3' | 'relay4';
 export type HaRelayMap = Partial<Record<HaRelayKey, string>>;
